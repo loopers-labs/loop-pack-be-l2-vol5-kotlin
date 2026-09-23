@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1460" role="img" aria-labelledby="title description">
+  <title id="title">커머스 애그리거트 경계</title>
+  <desc id="description">브랜드, 상품, 좋아요, 사용자, 포인트, 주문 애그리거트를 위에서 아래로 배치한다. 애그리거트 사이 연결선은 없고, 각 경계 안에 루트와 내부 객체만 표시한다.</desc>
+  <style>
+    text { font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; fill: #172231; }
+    .heading { font-size: 30px; font-weight: 700; }
+    .caption { font-size: 16px; fill: #526071; }
+    .group-title { font-size: 22px; font-weight: 700; }
+    .node-name { font-size: 23px; font-weight: 700; text-anchor: middle; }
+    .node-role { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-anchor: middle; }
+    .node { fill: #fff; stroke: #8290a3; stroke-width: 1.4; }
+    .link { fill: none; stroke: #66758a; stroke-width: 2; }
+    .brand .panel { fill: #e8f1ff; stroke: #9dc0f4; }
+    .brand .accent { fill: #4b83d7; }
+    .brand .node-role { fill: #3568b0; }
+    .product .panel { fill: #e6f7f2; stroke: #8fd6c1; }
+    .product .accent { fill: #27977d; }
+    .product .node-role { fill: #167e66; }
+    .like .panel { fill: #f0edff; stroke: #c1b3f2; }
+    .like .accent { fill: #8161c8; }
+    .like .node-role { fill: #6848b0; }
+    .user .panel { fill: #fff4e4; stroke: #ebc780; }
+    .user .accent { fill: #c38b2c; }
+    .user .node-role { fill: #a2711e; }
+    .point .panel { fill: #e8f7fb; stroke: #8ccbd9; }
+    .point .accent { fill: #258da5; }
+    .point .node-role { fill: #176c80; }
+    .order .panel { fill: #ffece9; stroke: #e8afa5; }
+    .order .accent { fill: #d46b5b; }
+    .order .node-role { fill: #b85243; }
+  </style>
+
+  <rect width="960" height="1460" fill="#fff" />
+  <text class="heading" x="42" y="55">커머스 애그리거트 경계</text>
+  <text class="caption" x="42" y="84">색이 있는 큰 상자 하나가 애그리거트 하나입니다.</text>
+
+  <g class="brand">
+    <rect class="panel" x="42" y="110" width="876" height="160" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="149">브랜드</text>
+    <rect class="node" x="325" y="164" width="310" height="80" rx="9" />
+    <rect class="accent" x="325" y="164" width="8" height="80" rx="4" />
+    <text class="node-name" x="480" y="202">Brand</text>
+    <text class="node-role" x="480" y="227">AGGREGATE ROOT</text>
+  </g>
+
+  <g class="product">
+    <rect class="panel" x="42" y="290" width="876" height="230" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="329">상품</text>
+    <rect class="node" x="325" y="343" width="310" height="72" rx="9" />
+    <rect class="accent" x="325" y="343" width="8" height="72" rx="4" />
+    <text class="node-name" x="480" y="377">Product</text>
+    <text class="node-role" x="480" y="400">AGGREGATE ROOT</text>
+    <path class="link" d="M480 415 V435 M290 435 H670 M290 435 V448 M670 435 V448" />
+    <rect class="node" x="165" y="448" width="250" height="53" rx="9" />
+    <text class="node-name" x="290" y="476">Stock</text>
+    <text class="node-role" x="290" y="493">VALUE OBJECT</text>
+    <rect class="node" x="545" y="448" width="250" height="53" rx="9" />
+    <text class="node-name" x="670" y="476">Money</text>
+    <text class="node-role" x="670" y="493">VALUE OBJECT</text>
+  </g>
+
+  <g class="like">
+    <rect class="panel" x="42" y="540" width="876" height="160" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="579">좋아요</text>
+    <rect class="node" x="325" y="594" width="310" height="80" rx="9" />
+    <rect class="accent" x="325" y="594" width="8" height="80" rx="4" />
+    <text class="node-name" x="480" y="632">ProductLike</text>
+    <text class="node-role" x="480" y="657">AGGREGATE ROOT</text>
+  </g>
+
+  <g class="user">
+    <rect class="panel" x="42" y="720" width="876" height="160" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="759">사용자</text>
+    <rect class="node" x="325" y="773" width="310" height="69" rx="9" />
+    <rect class="accent" x="325" y="773" width="8" height="69" rx="4" />
+    <text class="node-name" x="480" y="806">User</text>
+    <text class="node-role" x="480" y="829">AGGREGATE ROOT</text>
+  </g>
+
+  <g class="point">
+    <rect class="panel" x="42" y="900" width="876" height="220" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="939">포인트</text>
+    <rect class="node" x="325" y="953" width="310" height="69" rx="9" />
+    <rect class="accent" x="325" y="953" width="8" height="69" rx="4" />
+    <text class="node-name" x="480" y="986">PointAccount</text>
+    <text class="node-role" x="480" y="1009">AGGREGATE ROOT</text>
+    <path class="link" d="M480 1022 V1038" />
+    <rect class="node" x="325" y="1038" width="310" height="60" rx="9" />
+    <text class="node-name" x="480" y="1068">PointBalance</text>
+    <text class="node-role" x="480" y="1088">VALUE OBJECT</text>
+  </g>
+
+  <g class="order">
+    <rect class="panel" x="42" y="1140" width="876" height="250" rx="14" stroke-width="2" />
+    <text class="group-title" x="69" y="1179">주문</text>
+    <rect class="node" x="325" y="1193" width="310" height="72" rx="9" />
+    <rect class="accent" x="325" y="1193" width="8" height="72" rx="4" />
+    <text class="node-name" x="480" y="1227">Order</text>
+    <text class="node-role" x="480" y="1250">AGGREGATE ROOT</text>
+    <path class="link" d="M480 1265 V1282 M290 1282 H670 M290 1282 V1295 M670 1282 V1295" />
+    <rect class="node" x="165" y="1295" width="250" height="72" rx="9" />
+    <text class="node-name" x="290" y="1329">OrderItem</text>
+    <text class="node-role" x="290" y="1352">INTERNAL ENTITY</text>
+    <rect class="node" x="545" y="1295" width="250" height="72" rx="9" />
+    <text class="node-name" x="670" y="1329">Money</text>
+    <text class="node-role" x="670" y="1352">VALUE OBJECT</text>
+  </g>
+
+  <text class="caption" x="42" y="1433">애그리거트 사이의 참조와 DB 관계는 이 그림에 표시하지 않습니다.</text>
+</svg>

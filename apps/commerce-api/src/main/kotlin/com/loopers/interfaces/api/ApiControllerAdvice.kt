@@ -3,10 +3,15 @@ package com.loopers.interfaces.api
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import com.loopers.domain.commerce.CommerceException
+import com.loopers.domain.commerce.CommerceFailure
+import com.loopers.domain.product.InsufficientStockException
+import jakarta.servlet.http.HttpServletRequest
 import com.loopers.support.error.CoreException
 import com.loopers.support.error.ErrorType
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
+import org.springframework.http.HttpStatus
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -24,30 +29,58 @@ class ApiControllerAdvice {
     private val log = LoggerFactory.getLogger(ApiControllerAdvice::class.java)
 
     @ExceptionHandler
+    fun handle(e: CommerceException): ResponseEntity<ApiResponse<*>> {
+        val status = when (e.reason) {
+            CommerceFailure.AUTHENTICATION_REQUIRED -> HttpStatus.UNAUTHORIZED
+            CommerceFailure.USER_MISMATCH -> HttpStatus.FORBIDDEN
+            CommerceFailure.ORDER_NOT_OWNED -> HttpStatus.FORBIDDEN
+            CommerceFailure.POINT_BALANCE_OVERFLOW,
+            CommerceFailure.INSUFFICIENT_POINTS,
+            CommerceFailure.ORDER_ALREADY_CONFIRMED,
+            -> HttpStatus.CONFLICT
+            CommerceFailure.BRAND_NOT_FOUND,
+            CommerceFailure.PRODUCT_NOT_FOUND,
+            CommerceFailure.USER_NOT_FOUND,
+            CommerceFailure.ORDER_NOT_FOUND,
+            -> HttpStatus.NOT_FOUND
+            CommerceFailure.BRAND_HAS_ACTIVE_PRODUCTS -> HttpStatus.CONFLICT
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity(ApiResponse.fail(e.reason.name, e.reason.message), status)
+    }
+
+    @ExceptionHandler
+    fun handle(e: InsufficientStockException): ResponseEntity<ApiResponse<*>> =
+        ResponseEntity(ApiResponse.fail("INSUFFICIENT_STOCK", "재고가 부족합니다."), HttpStatus.CONFLICT)
+
+    @ExceptionHandler
     fun handle(e: CoreException): ResponseEntity<ApiResponse<*>> {
         log.warn("CoreException : {}", e.customMessage ?: e.message, e)
         return failureResponse(errorType = e.errorType, errorMessage = e.customMessage)
     }
 
     @ExceptionHandler
-    fun handleBadRequest(e: MethodArgumentTypeMismatchException): ResponseEntity<ApiResponse<*>> {
+    fun handleBadRequest(e: MethodArgumentTypeMismatchException, request: HttpServletRequest): ResponseEntity<ApiResponse<*>> {
         val name = e.name
         val type = e.requiredType?.simpleName ?: "unknown"
         val value = e.value ?: "null"
         val message = "요청 파라미터 '$name' (타입: $type)의 값 '$value'이(가) 잘못되었습니다."
-        return failureResponse(errorType = ErrorType.BAD_REQUEST, errorMessage = message)
+        return badRequestResponse(request, message)
     }
 
     @ExceptionHandler
-    fun handleBadRequest(e: MissingServletRequestParameterException): ResponseEntity<ApiResponse<*>> {
+    fun handleBadRequest(
+        e: MissingServletRequestParameterException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ApiResponse<*>> {
         val name = e.parameterName
         val type = e.parameterType
         val message = "필수 요청 파라미터 '$name' (타입: $type)가 누락되었습니다."
-        return failureResponse(errorType = ErrorType.BAD_REQUEST, errorMessage = message)
+        return badRequestResponse(request, message)
     }
 
     @ExceptionHandler
-    fun handleBadRequest(e: HttpMessageNotReadableException): ResponseEntity<ApiResponse<*>> {
+    fun handleBadRequest(e: HttpMessageNotReadableException, request: HttpServletRequest): ResponseEntity<ApiResponse<*>> {
         val errorMessage = when (val rootCause = e.rootCause) {
             is InvalidFormatException -> {
                 val fieldName = rootCause.path.joinToString(".") { it.fieldName ?: "?" }
@@ -81,11 +114,11 @@ class ApiControllerAdvice {
             else -> "요청 본문을 처리하는 중 오류가 발생했습니다. JSON 메세지 규격을 확인해주세요."
         }
 
-        return failureResponse(errorType = ErrorType.BAD_REQUEST, errorMessage = errorMessage)
+        return badRequestResponse(request, errorMessage)
     }
 
     @ExceptionHandler
-    fun handleBadRequest(e: ServerWebInputException): ResponseEntity<ApiResponse<*>> {
+    fun handleBadRequest(e: ServerWebInputException, request: HttpServletRequest): ResponseEntity<ApiResponse<*>> {
         fun extractMissingParameter(message: String): String {
             val regex = "'(.+?)'".toRegex()
             return regex.find(message)?.groupValues?.get(1) ?: ""
@@ -93,9 +126,9 @@ class ApiControllerAdvice {
 
         val missingParams = extractMissingParameter(e.reason ?: "")
         return if (missingParams.isNotEmpty()) {
-            failureResponse(errorType = ErrorType.BAD_REQUEST, errorMessage = "필수 요청 값 \'$missingParams\'가 누락되었습니다.")
+            badRequestResponse(request, "필수 요청 값 \'$missingParams\'가 누락되었습니다.")
         } else {
-            failureResponse(errorType = ErrorType.BAD_REQUEST)
+            badRequestResponse(request)
         }
     }
 
@@ -116,4 +149,11 @@ class ApiControllerAdvice {
             ApiResponse.fail(errorCode = errorType.code, errorMessage = errorMessage ?: errorType.message),
             errorType.status,
         )
+
+    private fun badRequestResponse(request: HttpServletRequest, message: String? = null): ResponseEntity<ApiResponse<*>> {
+        if (request.requestURI.startsWith("/api/v1/examples")) {
+            return failureResponse(ErrorType.BAD_REQUEST, message)
+        }
+        return ResponseEntity(ApiResponse.fail("INVALID_REQUEST", message ?: "잘못된 요청입니다."), HttpStatus.BAD_REQUEST)
+    }
 }

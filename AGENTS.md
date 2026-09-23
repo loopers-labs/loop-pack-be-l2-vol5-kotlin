@@ -1,0 +1,92 @@
+# LoopPack DDD 작업 지침
+
+## 기준 문서와 변경 범위
+
+- 구현 전 해당 주차의 기획서와 `docs` 아래 관련 설계 문서에서 API 계약, 불변식,
+  Aggregate 경계, 저장 구조와 동시성 정책을 확인한다.
+- 기획서 요구, 사용자 결정, 코드 확인 결과와 설계 결정을 구분한다.
+- 합의되지 않은 제품 정책을 추측해 구현하지 않는다. 결과나 데이터 구조를 바꾸는 미정
+  정책은 먼저 질문한다.
+- 설계 문서와 구현이 달라지면 코드를 억지로 문서에 맞추지 말고 차이와 이유를 설명한 뒤
+  승인받아 문서와 구현을 함께 갱신한다.
+- 요청한 기능과 관련 없는 패키지 재배치, 공통화 또는 전면 리팩터링은 하지 않는다.
+
+## Layered Architecture
+
+허용하는 소스 의존 방향은 다음과 같다.
+
+```text
+interfaces -> application -> domain
+infrastructure -----------> domain
+```
+
+- `domain`은 `interfaces`, `application`, `infrastructure`에 의존하지 않는다.
+- `application`은 `interfaces` DTO나 `infrastructure` 구현 타입에 의존하지 않는다.
+- `interfaces`는 `infrastructure`에 직접 의존하지 않는다.
+- repository 인터페이스는 `domain`, JPA 구현과 조회 구현은 `infrastructure`에 둔다.
+- controller는 입력 변환, 요청자 식별, validation과 HTTP 응답 매핑만 담당한다.
+- application service는 트랜잭션 경계와 Aggregate 협력을 조율한다.
+- infrastructure에 HTTP 정책이나 중복된 도메인 규칙을 구현하지 않는다.
+- 새 의존을 추가할 때 메서드 parameter, 반환 타입과 annotation까지 의존 방향을 확인한다.
+
+## DDD와 객체 책임
+
+- Aggregate는 트랜잭션 일관성 경계로 작게 유지한다. 편의를 위한 거대한 객체 그래프를
+  만들지 않는다.
+- 다른 Aggregate는 객체 연관보다 식별자로 참조한다. 객체 연관이나 물리 FK가 필요하다면
+  조회·무결성·생명주기상의 이유를 먼저 설명한다.
+- Entity는 식별자와 생명주기를 가지며, 상태 변경은 의미가 드러나는 행동으로 수행한다.
+  공개 setter로 불변식을 우회하지 않는다.
+- Value Object는 값의 의미와 유효성을 책임지고 가능한 한 불변으로 만든다.
+- 상태를 가진 객체가 지킬 수 있는 규칙은 해당 객체에 요청한다. application이 getter로
+  값을 꺼내 업무 계산을 한 뒤 setter로 되돌려 넣지 않는다.
+- 여러 Aggregate 조회가 필요한 판단과 유스케이스 순서는 application이 조율한다.
+- 한 Entity에 자연스럽게 속하지 않는 도메인 판단에만 Domain Service를 사용한다.
+- 응답 조합, 정렬, 페이지 조회는 domain 객체의 책임으로 밀어 넣지 않는다.
+- 모든 숫자와 문자열을 무조건 Value Object로 감싸거나 모든 클래스에 인터페이스를 만들지
+  않는다. 반복되는 유효성, 의미 혼동, 교체 가능한 경계에 근거가 있을 때 도입한다.
+- JPA annotation은 현재 domain model에 허용하지만 Entity가 Spring Data repository나
+  HTTP DTO를 알게 하지 않는다.
+
+## 과제별 설계 결정 관리
+
+- 이 파일에는 여러 주차와 도메인에 공통으로 적용할 작업 원칙만 둔다.
+- 특정 과제의 Entity 이름, API 경로, 테이블, 삭제 정책, 잠금 순서와 같은 결정은 해당
+  과제의 설계 문서에 기록한다.
+- 새로운 과제를 시작할 때 이전 과제의 Aggregate, 정책 또는 기술 결정을 그대로 복사하지
+  않는다. 요구와 변경 이유를 다시 확인한다.
+- 설계 문서에는 기획서 요구, 사용자 결정, 코드 확인 결과와 설계 결정을 구분해 기록한다.
+- 과제별 설계 결정을 바꾸려면 관련 API, 데이터, 동시성, 테스트 영향을 설명하고 사용자
+  확인을 먼저 받는다.
+
+## 트랜잭션과 데이터 무결성
+
+- 하나의 유스케이스에서 함께 성공하거나 실패해야 하는 변경은 application transaction
+  하나로 묶는다.
+- 여러 Aggregate를 잠가야 한다면 모든 유스케이스가 따를 고정 잠금 순서를 설계 문서에
+  정의하고, 모든 조건을 확인한 뒤 상태를 변경한다.
+- 실패 시 Aggregate 일부만 변경된 상태가 남지 않도록 예외와 rollback 경계를 확인한다.
+- application 사전 검사만 신뢰하지 않는다. 중복 관계, 음수 값 등 DB가 보장할 수 있는
+  무결성은 unique와 check constraint로 함께 보호한다.
+- DB lock을 추가하기 전에 반드시 보호할 불변식, 경합 시 기대 결과와 잠금 순서를 문서와
+  테스트에 명시한다.
+- 조회 편의를 위한 cascade remove를 추가하지 않는다. 삭제 전파는 합의된 생명주기에서만
+  사용한다.
+
+## 테스트와 작업 절차
+
+- 작은 기능 단위로 변경할 책임, 파일과 테스트를 먼저 정한다.
+- 대표 도메인 규칙은 Red -> Green -> Refactor 순서로 구현하고, Red가 의도한 이유로
+  실패했는지 확인한다.
+- domain 규칙은 Spring·DB 없는 단위 테스트로 검증한다.
+- 여러 Aggregate 협력과 요청자 구분은 application 테스트로 검증한다.
+- JPA 저장과 관계는 `flush()`와 `clear()` 후 재조회하는 통합 테스트로 확인한다.
+- HTTP 계약과 권한은 실제 controller, application, repository와 테스트 DB를 사용하는
+  MockMvc 테스트로 확인한다.
+- 동시성 정책은 결과 상태까지 검증한다. 예외 발생만 확인하지 말고 관련 Aggregate 상태가
+  유지되거나 정확히 한 번 변경됐는지 확인한다.
+- 테스트 기대값, lint 또는 ArchUnit 규칙을 통과 목적으로 삭제하거나 완화하지 않는다.
+- 변경 후 관련 테스트, `ktlintCheck`, `ArchitectureTest`와 필요한 `check`를 실행하고
+  실행 건수, 실패, skip과 종료 결과를 확인한다.
+- 검사 실패 시 코드, 설계 또는 검사 중 무엇이 잘못됐는지 판단하며 실패를 무시하는 설정을
+  추가하지 않는다.

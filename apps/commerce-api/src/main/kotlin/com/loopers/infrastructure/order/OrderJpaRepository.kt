@@ -1,18 +1,20 @@
 package com.loopers.infrastructure.order
 
 import com.loopers.domain.order.Order
+import jakarta.persistence.LockModeType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 
-/**
- * 조건과 정렬이 모두 `orders` 안에 있어 **전부 파생 쿼리다** (C-6 과 갈리는 자리 — DS-1 정정).
- *
- * 이름이 조건을 든다. `findById` 가 아니라 `findByIdAndUserId` 라서 소유권 확인을 빠뜨릴 수 없다 (P-02).
- */
+/** 이름에 소유권 조건을 담아 확인 누락 방지 (findByIdAndUserId) */
 interface OrderJpaRepository : JpaRepository<Order, Long> {
     fun findByIdAndUserId(id: Long, userId: Long): Order?
 
-    /** C-11 · 최신 주문순 (P-46). 총 개수도 같은 조건에서 나온다. */
+    /** 같은 주문의 확정·취소가 동시에 DRAFT 로 판단하는 것 방지 */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    fun findForUpdateByIdAndUserId(id: Long, userId: Long): Order?
+
+    /** 최신 주문순, 총 개수도 같은 조건에서 산출 */
     fun findAllByUserIdOrderByIdDesc(userId: Long, pageable: Pageable): Page<Order>
 }

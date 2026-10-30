@@ -8,6 +8,13 @@
         </root>
     </springProfile>
 
+    <springProfile name="slack">
+        <include resource="appenders/slack-appender.xml"/>
+        <logger name="com.loopers" additivity="true">
+            <appender-ref ref="ASYNC-SLACK"/>
+        </logger>
+    </springProfile>
+
     <springProfile name="dev">
         <include resource="appenders/json-console-appender.xml"/>
         <include resource="appenders/slack-appender.xml"/>

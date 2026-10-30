@@ -14,7 +14,7 @@ spring:
   main:
     web-application-type: servlet
   application:
-    name: commerce-api
+    name: commerce-streamer
   profiles:
     active: local
   config:
@@ -28,6 +28,9 @@ spring:
 demo-kafka:
   test:
     topic-name: demo.internal.topic-v1
+
+order-event:
+  topic: ${ORDER_EVENTS_TOPIC:order.events.v1}
 
 ---
 spring:

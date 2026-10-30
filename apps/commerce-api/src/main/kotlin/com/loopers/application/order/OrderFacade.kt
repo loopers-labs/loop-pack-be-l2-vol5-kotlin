@@ -6,10 +6,9 @@ import com.loopers.domain.order.OrderLine
 import com.loopers.domain.order.OrderService
 import com.loopers.domain.payment.CardInfo
 import com.loopers.domain.payment.PaymentMethod
-import com.loopers.domain.payment.PaymentRepository
-import com.loopers.domain.payment.PaymentStatus
 import com.loopers.domain.point.PointService
 import com.loopers.domain.product.ProductService
+import com.loopers.domain.product.StockReservationService
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,7 +25,7 @@ class OrderFacade(
     private val pointService: PointService,
     private val paymentProcessor: PaymentProcessor,
     private val orderConfirmation: OrderConfirmation,
-    private val paymentRepository: PaymentRepository,
+    private val stockReservationService: StockReservationService,
 ) {
     /**
      * 주문서만 만든다. 단가는 이 시점의 상품 가격으로 고정한다. 나중에는 알아낼 수 없는 값이다.
@@ -72,19 +71,11 @@ class OrderFacade(
 
         if (confirmed) {
             canceled.paidAmount?.let { pointService.refund(userId, it) }
-
-            if (paid(orderId)) {
-                canceled.lines.forEach { line ->
-                    productService.restoreStock(line.productId, line.quantity)
-                }
-            }
+            stockReservationService.release(orderId)
         }
 
         return OrderInfo.from(canceled)
     }
-
-    private fun paid(orderId: Long): Boolean =
-        paymentRepository.findAllByOrderId(orderId).any { it.status == PaymentStatus.SUCCESS }
 
     fun get(userId: Long, orderId: Long): OrderInfo =
         OrderInfo.from(orderService.get(userId, orderId))

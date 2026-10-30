@@ -147,9 +147,9 @@ class OrderPaymentIntegrationTest @Autowired constructor(
         )
     }
 
-    @DisplayName("PG 호출이 실패하면 재고는 줄지 않고 주문은 확정으로 남는다.")
+    @DisplayName("PG 호출이 실패해도 예약한 재고는 잡힌 채로 남고 주문은 확정으로 남는다.")
     @Test
-    fun keepsStockAndOrderWhenGatewayFails() {
+    fun holdsReservedStockWhenGatewayFails() {
         val product = savedProduct(price = 1_000, stock = 5)
         val orderId = orderFacade.create(userId, listOf(OrderCommand.Line(product.id, 2))).id
         every { paymentGateway.request(any(), any(), any()) } throws IllegalStateException("PG 응답 없음")
@@ -157,8 +157,28 @@ class OrderPaymentIntegrationTest @Autowired constructor(
         runCatching { orderFacade.confirm(userId, orderId, PaymentMethod.CARD, card) }
 
         assertAll(
-            { assertThat(productJpaRepository.findById(product.id).get().stock.quantity).isEqualTo(5) },
+            { assertThat(productJpaRepository.findById(product.id).get().stock.quantity).isEqualTo(3) },
             { assertThat(orderFacade.get(userId, orderId).status).isEqualTo("CONFIRMED") },
+        )
+    }
+
+    @DisplayName("확정하면 결제 결과를 기다리는 동안에도 재고가 잡혀 있다.")
+    @Test
+    fun reservesStockAtConfirm() {
+        val product = savedProduct(price = 1_000, stock = 5)
+        val orderId = orderFacade.create(userId, listOf(OrderCommand.Line(product.id, 2))).id
+        every { paymentGateway.request(any(), any(), any()) } returns PaymentTransaction(
+            orderId = orderId,
+            amount = Money(2_000),
+            maskedCardNo = "****-****-****-1451",
+            status = PaymentStatus.PENDING,
+        )
+
+        orderFacade.confirm(userId, orderId, PaymentMethod.CARD, card)
+
+        assertAll(
+            { assertThat(productJpaRepository.findById(product.id).get().stock.quantity).isEqualTo(3) },
+            { assertThat(paymentRepository.findAllByOrderId(orderId).first().status).isEqualTo(PaymentStatus.PENDING) },
         )
     }
 

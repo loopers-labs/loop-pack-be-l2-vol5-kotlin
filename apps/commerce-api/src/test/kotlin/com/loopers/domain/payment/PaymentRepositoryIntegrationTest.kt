@@ -28,7 +28,7 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("주문과 금액을 저장한다.")
     @Test
     fun saves() {
-        val saved = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        val saved = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         assertAll(
             { assertThat(saved.id).isPositive() },
@@ -42,8 +42,8 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("주문으로 찾는다.")
     @Test
     fun findsByOrderId() {
-        paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
-        paymentRepository.save(Payment(orderId = 2L, amount = Money(30_000)))
+        paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
+        paymentRepository.save(Payment(userId = 1L, orderId = 2L, amount = Money(30_000)))
 
         assertAll(
             { assertThat(paymentRepository.findAllByOrderId(1L)).hasSize(1) },
@@ -55,7 +55,7 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("상태를 바꾼다.")
     @Test
     fun changesStatus() {
-        val saved = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        val saved = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         saved.markSuccess()
         paymentRepository.save(saved)
@@ -66,8 +66,8 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("한 주문에 여러 건을 남길 수 있다.")
     @Test
     fun allowsManyPerOrder() {
-        paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
-        paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
+        paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         assertThat(paymentRepository.findAllByOrderId(1L)).hasSize(2)
     }
@@ -75,7 +75,7 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("저장하면 멱등키가 함께 남는다.")
     @Test
     fun issuesPaymentKey() {
-        val saved = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        val saved = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         assertAll(
             { assertThat(saved.paymentKey).isNotBlank() },
@@ -86,8 +86,8 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("한 주문의 두 시도는 서로 다른 멱등키를 받는다.")
     @Test
     fun issuesDistinctKeysPerAttempt() {
-        val first = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
-        val second = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        val first = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
+        val second = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         assertThat(first.paymentKey).isNotEqualTo(second.paymentKey)
     }
@@ -95,7 +95,7 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @DisplayName("멱등키로 찾는다.")
     @Test
     fun findsByPaymentKey() {
-        val saved = paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000)))
+        val saved = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
         assertAll(
             { assertThat(paymentRepository.findByPaymentKey(saved.paymentKey)?.id).isEqualTo(saved.id) },
@@ -107,10 +107,10 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     @Test
     fun rejectsDuplicateKey() {
         val key = "11111111-2222-3333-4444-555555555555"
-        paymentRepository.save(Payment(orderId = 1L, amount = Money(50_000), paymentKey = key))
+        paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000), paymentKey = key))
 
         assertThatThrownBy {
-            paymentRepository.save(Payment(orderId = 2L, amount = Money(30_000), paymentKey = key))
+            paymentRepository.save(Payment(userId = 1L, orderId = 2L, amount = Money(30_000), paymentKey = key))
             entityManager.flush()
         }.isInstanceOf(DataIntegrityViolationException::class.java)
     }

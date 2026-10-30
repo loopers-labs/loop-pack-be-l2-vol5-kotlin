@@ -21,6 +21,7 @@ spring:
     import:
       - jpa.yml
       - redis.yml
+      - kafka.yml
       - logging.yml
       - monitoring.yml
 
@@ -32,6 +33,10 @@ springdoc:
 product:
   stats:
     cron: ${PRODUCT_STATS_CRON:0 0 4 * * *}
+
+order-event:
+  topic: ${ORDER_EVENTS_TOPIC:order.events.v1}
+  schema-version: ${ORDER_EVENTS_SCHEMA_VERSION:1}
 
 pg:
   base-url: ${PG_BASE_URL:http://localhost:8082}

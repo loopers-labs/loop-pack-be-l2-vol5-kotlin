@@ -84,20 +84,22 @@ class PaymentCallbackHandlerIntegrationTest @Autowired constructor(
 
     private fun statusOf(orderId: Long) = paymentRepository.findAllByOrderId(orderId).first().status
 
-    @DisplayName("승인 콜백이 오면 미확정 결제가 SUCCESS 가 되고, 이때 재고가 줄어든다.")
+    @DisplayName("승인 콜백이 오면 미확정 결제가 SUCCESS 가 되고, 확정 때 잡아둔 재고가 그대로 굳는다.")
     @Test
-    fun approvesPendingAndTakesStock() {
+    fun approvesPendingAndKeepsReservedStock() {
         val (orderId, productId) = pendingOrder(quantity = 2, stock = 5)
+        val reservedStock = stockOf(productId)
 
         paymentCallbackHandler.handle(callback(PaymentStatus.SUCCESS, orderId))
 
         assertAll(
+            { assertThat(reservedStock).isEqualTo(3) },
             { assertThat(statusOf(orderId)).isEqualTo(PaymentStatus.SUCCESS) },
             { assertThat(stockOf(productId)).isEqualTo(3) },
         )
     }
 
-    @DisplayName("같은 승인 콜백이 두 번 와도 결과가 같고, 재고도 한 번만 줄어든다.")
+    @DisplayName("같은 승인 콜백이 두 번 와도 결과가 같고, 재고가 두 번 줄지 않는다.")
     @Test
     fun isIdempotent() {
         val (orderId, productId) = pendingOrder(quantity = 2, stock = 5)
@@ -134,17 +136,30 @@ class PaymentCallbackHandlerIntegrationTest @Autowired constructor(
         assertThat(paymentRepository.findAllByOrderId(9999L)).isEmpty()
     }
 
-    @DisplayName("거절 콜백이 오면 미확정 결제가 FAILED 가 되고, 재고는 줄지 않는다.")
+    @DisplayName("거절 콜백이 오면 미확정 결제가 FAILED 가 되고, 잡아둔 재고가 풀린다.")
     @Test
-    fun declinesPendingAndKeepsStock() {
+    fun declinesPendingAndReleasesStock() {
         val (orderId, productId) = pendingOrder(quantity = 2, stock = 5)
+        val reservedStock = stockOf(productId)
 
         paymentCallbackHandler.handle(callback(PaymentStatus.FAILED, orderId))
 
         assertAll(
+            { assertThat(reservedStock).isEqualTo(3) },
             { assertThat(statusOf(orderId)).isEqualTo(PaymentStatus.FAILED) },
             { assertThat(stockOf(productId)).isEqualTo(5) },
         )
+    }
+
+    @DisplayName("같은 거절 콜백이 두 번 와도 재고가 한 번만 풀린다.")
+    @Test
+    fun releasesStockOnlyOnce() {
+        val (orderId, productId) = pendingOrder(quantity = 2, stock = 5)
+
+        paymentCallbackHandler.handle(callback(PaymentStatus.FAILED, orderId))
+        paymentCallbackHandler.handle(callback(PaymentStatus.FAILED, orderId))
+
+        assertThat(stockOf(productId)).isEqualTo(5)
     }
 
     @DisplayName("이미 SUCCESS 인 결제는 거절 콜백이 와도 되돌아가지 않는다.")

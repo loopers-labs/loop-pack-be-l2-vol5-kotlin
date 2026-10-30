@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 class ProductService(
     private val productRepository: ProductRepository,
     private val productSearchCache: ProductSearchCache,
+    private val productStockService: ProductStockService,
 ) {
     /**
      * 재고는 생성에서 받지 않는다. 항상 0 으로 시작하고 재고 변경으로만 바꾼다.
@@ -17,9 +18,12 @@ class ProductService(
      */
     @Transactional
     fun create(brandId: Long, name: String, price: Money): Product {
-        return productRepository.save(
+        val product = productRepository.save(
             Product(brandId = brandId, name = name, price = price, stock = Stock(INITIAL_STOCK)),
         )
+        productStockService.sync(product.id, product.stock.quantity)
+
+        return product
     }
 
     /**
@@ -180,7 +184,7 @@ class ProductService(
         val product = getSellable(id)
         if (amount > 0) product.increaseStock(amount)
 
-        return productRepository.save(product)
+        return productRepository.save(product).also { productStockService.sync(it.id, it.stock.quantity) }
     }
 
     /**
@@ -190,7 +194,7 @@ class ProductService(
     fun decreaseStock(product: Product, quantity: Int): Product {
         product.decreaseStock(quantity)
 
-        return productRepository.save(product)
+        return productRepository.save(product).also { productStockService.sync(it.id, it.stock.quantity) }
     }
 
     /**
@@ -200,7 +204,7 @@ class ProductService(
     fun restoreStock(productId: Long, quantity: Int): Product {
         val product = get(productId).also { it.increaseStock(quantity) }
 
-        return productRepository.save(product)
+        return productRepository.save(product).also { productStockService.sync(it.id, it.stock.quantity) }
     }
 
     @Transactional

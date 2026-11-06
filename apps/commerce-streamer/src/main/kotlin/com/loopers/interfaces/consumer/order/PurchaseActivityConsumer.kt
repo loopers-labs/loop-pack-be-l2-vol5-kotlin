@@ -1,8 +1,8 @@
 package com.loopers.interfaces.consumer.order
 
+import com.loopers.application.purchase.PurchaseActivityFacade
 import com.loopers.config.kafka.KafkaConfig
 import com.loopers.domain.purchase.PurchaseActivityCommand
-import com.loopers.domain.purchase.PurchaseActivityService
 import com.loopers.domain.purchase.PurchaseConflictException
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
 @Component
 class PurchaseActivityConsumer(
     private val orderEventRecords: OrderEventRecords,
-    private val purchaseActivityService: PurchaseActivityService,
+    private val purchaseActivityFacade: PurchaseActivityFacade,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -34,9 +34,9 @@ class PurchaseActivityConsumer(
 
     private fun reflect(command: PurchaseActivityCommand) {
         try {
-            purchaseActivityService.record(command)
+            purchaseActivityFacade.record(command)
         } catch (_: DataIntegrityViolationException) {
-            if (purchaseActivityService.conflictsWith(command)) {
+            if (purchaseActivityFacade.conflictsWith(command)) {
                 throw PurchaseConflictException(command.eventId)
             }
 

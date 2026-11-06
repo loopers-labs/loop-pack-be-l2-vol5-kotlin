@@ -1,6 +1,7 @@
 package com.loopers.infrastructure.order
 
 import com.loopers.domain.order.OrderConfirmedEvent
+import com.loopers.domain.outbox.OutboxEventRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -16,7 +17,12 @@ import java.util.concurrent.CompletableFuture
 
 class OrderEventKafkaPublisherTest {
     private val kafkaTemplate = mockk<KafkaTemplate<Any, Any>>()
-    private val publisher = OrderEventKafkaPublisher(kafkaTemplate, OrderEventProperties(TOPIC, SCHEMA_VERSION))
+    private val outboxEventRepository = mockk<OutboxEventRepository>(relaxed = true)
+    private val publisher = OrderEventKafkaPublisher(
+        kafkaTemplate,
+        OrderEventProperties(TOPIC, SCHEMA_VERSION),
+        outboxEventRepository,
+    )
 
     private val event = OrderConfirmedEvent(
         eventId = OrderConfirmedEvent.idOf(42L),
@@ -80,7 +86,42 @@ class OrderEventKafkaPublisherTest {
         )
     }
 
+    @DisplayName("브로커가 받았다고 답하면 아웃박스 행을 SENT 로 바꾼다.")
+    @Test
+    fun marksSentOnAck() {
+        every { kafkaTemplate.send(any<String>(), any(), any()) } returns
+            CompletableFuture.completedFuture(mockk<SendResult<Any, Any>>())
+
+        publisher.publish(event)
+
+        verify(timeout = ACK_TIMEOUT_MS, exactly = 1) { outboxEventRepository.markSent(event.eventId) }
+    }
+
+    @DisplayName("브로커가 받지 못하면 아웃박스 행을 그대로 둔다.")
+    @Test
+    fun keepsPendingWithoutAck() {
+        every { kafkaTemplate.send(any<String>(), any(), any()) } returns
+            CompletableFuture.failedFuture(IllegalStateException("브로커가 응답하지 않는다"))
+
+        publisher.publish(event)
+        Thread.sleep(ACK_TIMEOUT_MS)
+
+        verify(exactly = 0) { outboxEventRepository.markSent(any()) }
+    }
+
+    @DisplayName("전송이 그 자리에서 터지면 아웃박스 행을 그대로 둔다.")
+    @Test
+    fun keepsPendingWhenSendThrows() {
+        every { kafkaTemplate.send(any<String>(), any(), any()) } throws
+            IllegalStateException("브로커 메타데이터를 못 받았다")
+
+        publisher.publish(event)
+
+        verify(exactly = 0) { outboxEventRepository.markSent(any()) }
+    }
+
     companion object {
+        private const val ACK_TIMEOUT_MS = 1_000L
         private const val TOPIC = "order.events.v1"
         private const val SCHEMA_VERSION = 1
     }

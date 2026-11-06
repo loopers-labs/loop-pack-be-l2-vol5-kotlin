@@ -2,6 +2,7 @@ package com.loopers.infrastructure.order
 
 import com.loopers.domain.order.OrderConfirmedEvent
 import com.loopers.domain.order.OrderEventPublisher
+import com.loopers.domain.outbox.OutboxEventRepository
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
@@ -10,13 +11,20 @@ import org.springframework.stereotype.Component
 class OrderEventKafkaPublisher(
     private val kafkaTemplate: KafkaTemplate<Any, Any>,
     private val properties: OrderEventProperties,
+    private val outboxEventRepository: OutboxEventRepository,
 ) : OrderEventPublisher {
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun publish(event: OrderConfirmedEvent) {
         try {
             kafkaTemplate.send(properties.topic, event.orderId.toString(), stamped(event))
-                .whenComplete { _, failure -> failure?.let { log(event, it) } }
+                .whenComplete { _, failure ->
+                    if (failure == null) {
+                        outboxEventRepository.markSent(event.eventId)
+                    } else {
+                        log(event, failure)
+                    }
+                }
         } catch (blocked: Exception) {
             log(event, blocked)
         }

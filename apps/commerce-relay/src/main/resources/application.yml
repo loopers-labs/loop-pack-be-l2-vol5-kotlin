@@ -1,0 +1,29 @@
+spring:
+  main:
+    web-application-type: none
+  application:
+    name: commerce-relay
+  profiles:
+    active: local
+  config:
+    import:
+      - jpa.yml
+      - kafka.yml
+      - logging.yml
+      - monitoring.yml
+
+management:
+  health:
+    defaults:
+      enabled: false
+
+relay:
+  cron: ${RELAY_CRON:0 */30 * * * *}
+  batch-size: ${RELAY_BATCH_SIZE:500}
+  send-timeout: ${RELAY_SEND_TIMEOUT:30s}
+
+---
+spring.config.activate.on-profile: test
+
+relay:
+  cron: "-"

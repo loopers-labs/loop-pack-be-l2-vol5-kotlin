@@ -3,6 +3,7 @@ package com.loopers.application.order
 import com.loopers.domain.brand.Brand
 import com.loopers.domain.order.OrderCommand
 import com.loopers.domain.order.OrderRepository
+import com.loopers.domain.outbox.OutboxStatus
 import com.loopers.domain.payment.PaymentRepository
 import com.loopers.domain.payment.PaymentStatus
 import com.loopers.domain.point.PointService
@@ -10,6 +11,7 @@ import com.loopers.domain.product.Product
 import com.loopers.domain.product.Stock
 import com.loopers.domain.shared.Money
 import com.loopers.infrastructure.brand.BrandJpaRepository
+import com.loopers.infrastructure.outbox.OutboxEventJpaRepository
 import com.loopers.infrastructure.product.ProductJpaRepository
 import com.loopers.utils.DatabaseCleanUp
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -43,6 +45,7 @@ class OrderEventUnpublishedIntegrationTest @Autowired constructor(
     private val pointService: PointService,
     private val productJpaRepository: ProductJpaRepository,
     private val brandJpaRepository: BrandJpaRepository,
+    private val outboxEventJpaRepository: OutboxEventJpaRepository,
     private val databaseCleanUp: DatabaseCleanUp,
 ) {
     @AfterEach
@@ -107,7 +110,21 @@ class OrderEventUnpublishedIntegrationTest @Autowired constructor(
         )
     }
 
+    @DisplayName("발행에 실패한 그 한 건은 아웃박스에 PENDING 으로 남아 릴레이를 기다린다.")
+    @Test
+    fun leavesOutboxPendingForRelay() {
+        pointService.charge(USER, Money(10_000))
+        val product = savedProduct()
+        val orderId = orderFacade.create(USER, listOf(OrderCommand.Line(product.id, 1))).id
+
+        orderFacade.confirm(USER, orderId)
+        Thread.sleep(DELIVERY_GIVE_UP_MS)
+
+        assertThat(outboxEventJpaRepository.findAll().single().status).isEqualTo(OutboxStatus.PENDING)
+    }
+
     companion object {
+        private const val DELIVERY_GIVE_UP_MS = 3_000L
         private const val USER = 1L
         private const val REACHABLE_BROKERS = "localhost:19092,localhost:19093,localhost:19094"
     }

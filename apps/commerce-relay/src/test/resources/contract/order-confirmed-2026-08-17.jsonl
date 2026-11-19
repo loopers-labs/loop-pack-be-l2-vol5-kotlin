@@ -1,0 +1,3 @@
+{"eventId":"order-confirmed:v1:42","orderId":42,"userId":1,"confirmedAt":"2026-08-18T10:00:00Z","items":[{"productId":7,"quantity":3},{"productId":8,"quantity":1}],"eventType":"OrderConfirmed","schemaVersion":1}
+{"eventId":"order-confirmed:v1:43","orderId":43,"userId":1,"confirmedAt":"2026-08-19T10:00:00Z","items":[{"productId":9,"quantity":5}],"eventType":"OrderConfirmed","schemaVersion":1}
+{"eventId":"order-confirmed:v1:44","orderId":44,"userId":1,"confirmedAt":"2026-08-20T10:00:00Z","items":[{"productId":7,"quantity":2}],"eventType":"OrderConfirmed","schemaVersion":1}

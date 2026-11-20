@@ -27,9 +27,7 @@ class DemoJobE2ETest @Autowired constructor(
     @param:Qualifier(DemoJobConfig.JOB_NAME) private val job: Job,
 ) {
     @BeforeEach
-    fun beforeEach() {
-
-    }
+    fun beforeEach() {}
 
     @DisplayName("jobParameter 중 requestDate 인자가 주어지지 않았을 때, demoJob 배치는 실패한다.")
     @Test

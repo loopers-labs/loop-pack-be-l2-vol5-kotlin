@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":modules:redis"))
     implementation(project(":modules:kafka"))
     implementation(project(":modules:events"))
+    implementation(project(":modules:ranking"))
     implementation(project(":supports:jackson"))
     implementation(project(":supports:logging"))
     implementation(project(":supports:monitoring"))
@@ -92,3 +93,27 @@ tasks.register<Test>("couponRedisLocalTest") {
     systemProperty("spring.profiles.active", "test")
     outputs.upToDateWhen { false }
 }
+
+val rankingE2e by sourceSets.creating
+configurations[rankingE2e.implementationConfigurationName].extendsFrom(configurations[outboxE2e.implementationConfigurationName])
+configurations[rankingE2e.runtimeOnlyConfigurationName].extendsFrom(configurations[outboxE2e.runtimeOnlyConfigurationName])
+rankingE2e.compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output + outboxE2e.output
+rankingE2e.runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output + outboxE2e.output
+
+dependencies {
+    add(rankingE2e.implementationConfigurationName, project(":apps:commerce-batch"))
+    add(rankingE2e.implementationConfigurationName, "org.springframework.batch:spring-batch-core")
+}
+
+tasks.register<Test>("rankingE2e") {
+    testClassesDirs = rankingE2e.output.classesDirs
+    classpath = rankingE2e.runtimeClasspath
+    useJUnitPlatform()
+    maxHeapSize = "768m"
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
+    systemProperty("spring.profiles.active", "test")
+    systemProperty("user.timezone", "Asia/Seoul")
+    mustRunAfter(tasks.test, "outboxE2e")
+}
+
+tasks.check { dependsOn("rankingE2e") }

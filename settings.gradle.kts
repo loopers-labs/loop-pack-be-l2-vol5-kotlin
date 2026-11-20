@@ -8,6 +8,7 @@ include(
     ":modules:redis",
     ":modules:kafka",
     ":modules:events",
+    ":modules:ranking",
     ":supports:jackson",
     ":supports:logging",
     ":supports:monitoring",

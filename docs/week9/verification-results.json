@@ -1,0 +1,698 @@
+{
+  "recordedAt": "2026-11-18T12:21:37.303463+00:00",
+  "branch": "jsjouo249",
+  "head": "af7e088917af9603cb0d1c2cb15e58bc507b9bf3",
+  "uncommitted": true,
+  "environment": {
+    "java": "Temurin 21.0.13+9 in temporary directory",
+    "springBoot": "3.4.4",
+    "springBatch": "5.2.2",
+    "mysql": "testcontainers mysql:8.0",
+    "kafka": "actual embedded single broker; not a distributed cluster",
+    "pg": "local HTTP PG fixture with production adapter",
+    "productionDataUsed": false
+  },
+  "fullCheck": {
+    "command": "./gradlew -Dorg.gradle.java.home=/tmp/jdk-21.0.13+9/Contents/Home :modules:ranking:check :modules:events:check :apps:commerce-batch:check :apps:commerce-api:check :apps:commerce-streamer:check --continue --console=plain",
+    "exitCode": 0,
+    "result": "BUILD SUCCESSFUL in 3m 49s",
+    "taskCounts": {
+      "executed": 26,
+      "upToDate": 94
+    },
+    "cachedTestTasks": [
+      ":modules:ranking:test (already executed this session)",
+      ":modules:events:test (subsequently rerun)",
+      ":apps:commerce-streamer:test (subsequently rerun with failures)"
+    ],
+    "log": "/tmp/week9-check.log"
+  },
+  "passingGroups": {
+    "rankingDomain": {
+      "source": "modules/ranking/build/test-results/test",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.domain.ranking.RankingTest",
+          "timestamp": "2026-11-18T07:52:33.212Z",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "events": {
+      "source": "modules/events/build/test-results/test",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.domain.order.event.OrderConfirmedTest",
+          "timestamp": "2026-11-18T08:04:12.687Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "batch": {
+      "source": "apps/commerce-batch/build/test-results/test",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.CommerceBatchApplicationTest",
+          "timestamp": "2026-11-18T08:02:18.785Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.architecture.ArchitectureTest",
+          "timestamp": "2026-11-18T08:02:18.794Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.job.demo.DemoJobE2ETest",
+          "timestamp": "2026-11-18T08:02:21.078Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.ranking.RankingJobRestartTest",
+          "timestamp": "2026-11-18T08:02:14.452Z",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "api": {
+      "source": "apps/commerce-api/build/test-results/test",
+      "tests": 204,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.CommerceApiContextTest",
+          "timestamp": "2026-11-18T07:59:31.076Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.cache.ProductListCacheContractTest",
+          "timestamp": "2026-11-18T07:59:36.324Z",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.cache.ProductListCacheHitTest",
+          "timestamp": "2026-11-18T07:59:46.333Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.cache.ProductListCacheOutageTest",
+          "timestamp": "2026-11-18T07:59:48.249Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.cache.ProductListCacheRaceTest",
+          "timestamp": "2026-11-18T07:59:53.077Z",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.cache.RedisProductListCacheFailureTest",
+          "timestamp": "2026-11-18T07:59:55.671Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "예시를 조회할 때,",
+          "timestamp": "2026-11-18T07:59:55.717Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.example.ExampleFacadeIntegrationTest",
+          "timestamp": "1970-01-01T00:00:00Z",
+          "tests": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.outbox.OutboxRecoveryTest",
+          "timestamp": "2026-11-18T07:59:56.327Z",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.outbox.OutboxRelayTest",
+          "timestamp": "2026-11-18T07:59:56.590Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.AdministrativeConcurrencyTest",
+          "timestamp": "2026-11-18T07:59:56.668Z",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.AggregateCoordinationTest",
+          "timestamp": "2026-11-18T07:59:59.464Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.BrandDeletionHttpTest",
+          "timestamp": "2026-11-18T07:59:59.535Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.BrandRemovalTransactionTest",
+          "timestamp": "2026-11-18T08:00:00.478Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.LostUpdateControlTest",
+          "timestamp": "2026-11-18T08:00:01.052Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.MySqlTransactionPolicyTest",
+          "timestamp": "2026-11-18T08:00:01.296Z",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.OrderConcurrencyTest",
+          "timestamp": "2026-11-18T08:00:11.057Z",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.PartialStorageTest",
+          "timestamp": "2026-11-18T08:00:12.734Z",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.PointInitializationTest",
+          "timestamp": "2026-11-18T08:00:14.031Z",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.RetryingWriteExecutorTest",
+          "timestamp": "2026-11-18T08:00:15.469Z",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.ReviewFixRegressionTest",
+          "timestamp": "2026-11-18T08:00:17.430Z",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.ReviewQueryPlanTest",
+          "timestamp": "2026-11-18T08:00:20.287Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.SqlContractTest",
+          "timestamp": "2026-11-18T08:00:21.406Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.application.transaction.WriteRollbackTest",
+          "timestamp": "2026-11-18T08:00:22.396Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.architecture.ArchitectureTest",
+          "timestamp": "2026-11-18T08:00:23.212Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.brand.BrandTest",
+          "timestamp": "2026-11-18T08:00:25.523Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "예시 모델을 생성할 때,",
+          "timestamp": "2026-11-18T08:00:25.527Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.order.OrderTest",
+          "timestamp": "2026-11-18T08:00:25.530Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.order.PgOrderTest",
+          "timestamp": "2026-11-18T08:00:25.533Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.outbox.OutboxMessageTest",
+          "timestamp": "2026-11-18T08:00:25.533Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.payment.PaymentAttemptTest",
+          "timestamp": "2026-11-18T08:00:25.538Z",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.point.PointAccountTest",
+          "timestamp": "2026-11-18T08:00:25.541Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.product.ProductTest",
+          "timestamp": "2026-11-18T08:00:25.543Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.domain.product.StockTest",
+          "timestamp": "2026-11-18T08:00:25.545Z",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.infrastructure.CommerceSchemaTest",
+          "timestamp": "2026-11-18T08:00:25.568Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.ContractClassificationTest",
+          "timestamp": "2026-11-18T08:00:27.596Z",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "GET /api/v1/examples/{id}",
+          "timestamp": "2026-11-18T08:00:28.985Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.ExampleV1ApiE2ETest",
+          "timestamp": "1970-01-01T00:00:00Z",
+          "tests": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.admin.AdminCommerceMockMvcTest",
+          "timestamp": "2026-11-18T08:00:31.442Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.like.ProductLikeMockMvcTest",
+          "timestamp": "2026-11-18T08:00:32.423Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.order.OrderMockMvcTest",
+          "timestamp": "2026-11-18T08:00:35.105Z",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.point.PointMockMvcTest",
+          "timestamp": "2026-11-18T08:00:37.376Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.product.CustomerBrowseMockMvcTest",
+          "timestamp": "2026-11-18T08:00:37.950Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.interfaces.api.ranking.WeeklyRankingApiTest",
+          "timestamp": "2026-11-18T08:00:38.907Z",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.KafkaOutboxSenderTest",
+          "timestamp": "2026-11-18T08:00:39.108Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.OutboxAtomicityTest",
+          "timestamp": "2026-11-18T08:00:44.687Z",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.OutboxDeliveryIntegrationTest",
+          "timestamp": "2026-11-18T08:00:49.439Z",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.PaymentIntegrationTest",
+          "timestamp": "2026-11-18T08:00:50.850Z",
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.PaymentProviderContractTest",
+          "timestamp": "2026-11-18T08:00:57.551Z",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.payment.PointPaymentMigrationTest",
+          "timestamp": "2026-11-18T08:00:58.545Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.loopers.support.error.CoreExceptionTest",
+          "timestamp": "2026-11-18T08:00:58.901Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "outboxE2e": {
+      "source": "apps/commerce-api/build/test-results/outboxE2e",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.week7.OutboxDeliveryE2ETest",
+          "timestamp": "2026-11-18T08:01:01.979Z",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "rankingE2e": {
+      "source": "apps/commerce-api/build/test-results/rankingE2e",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.loopers.week9.WeeklyRankingFlowTest",
+          "timestamp": "2026-11-18T08:02:23.616Z",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  },
+  "passingGroupTotals": {
+    "tests": 229,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "observations": [
+    "WEEK9 PROBE_FAILED instance=1 execution=1 step=1 status=FAILED state={purchaseProductProbe.read.count=2, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} reader=purchaseProductProbe calls=[7, 8, 9]",
+    "WEEK9 PROBE_RESTARTED instance=1 execution=2 step=2 status=COMPLETED state={purchaseProductProbe.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} reader=purchaseProductProbe calls=[9]",
+    "WEEK9_COMPARISON trial=A snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-1 instance=2 execution=3 step=3 status=COMPLETED state={comparisonProducts.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8, 9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1), ProductScore(productId=9, score=5)]",
+    "WEEK9_COMPARISON trial=B snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-2 instance=3 execution=4 step=4 status=FAILED state={comparisonProducts.read.count=2, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8, 9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1)]",
+    "WEEK9_COMPARISON trial=B snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-2 instance=3 execution=5 step=5 status=COMPLETED state={comparisonProducts.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1), ProductScore(productId=9, score=5)]",
+    "WEEK9_COMPARISON trial=C-failure snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-3 instance=4 execution=6 step=6 status=FAILED state={comparisonProducts.read.count=2, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8, 9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1)]",
+    "WEEK9_COMPARISON trial=C-full snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-3 instance=5 execution=7 step=7 status=COMPLETED state={comparisonProducts.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8, 9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1), ProductScore(productId=9, score=5)]",
+    "WEEK9_COMPARISON D repeatedWrites=3 product=7 rows=1 score=5 input=3e90276ec1f9123f308cd18d155e1dde6bf811ef3aa741105ff5c766c357a298",
+    "WEEK9_COMPARISON trial=E snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-4 instance=6 execution=8 step=8 status=FAILED state={comparisonProducts.read.count=0, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8] stage=[]",
+    "WEEK9_COMPARISON trial=E snapshot=comparison-c2044bd4-bced-4131-b6fb-2c7c8f0a3ad9-4 instance=6 execution=9 step=9 status=COMPLETED state={comparisonProducts.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} calls=[7, 8, 9] stage=[ProductScore(productId=7, score=5), ProductScore(productId=8, score=1), ProductScore(productId=9, score=5)]",
+    "WEEK9 JOB_FAILED instance=10 execution=14 step=21 status=FAILED state={weeklyRankingProducts.read.count=2, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} reader=weeklyRankingProducts calls=[7, 8, 9]",
+    "WEEK9 JOB_RESTARTED instance=10 execution=15 step=22 status=COMPLETED state={weeklyRankingProducts.read.count=4, batch.taskletType=org.springframework.batch.core.step.item.ChunkOrientedTasklet, batch.version=5.2.2, batch.stepType=org.springframework.batch.core.step.tasklet.TaskletStep} reader=weeklyRankingProducts calls=[9]",
+    "WEEK9 SNAPSHOT id=w9-166380ed-f024-4a06-82fc-7aed2dc1e0e3 revision=2 input=3e90276ec1f9123f308cd18d155e1dde6bf811ef3aa741105ff5c766c357a298 result=745d50bbd2f04a2e8c937f9ebf5f2cddbf75b958540e964934a424903b0a67d2",
+    "WEEK9 PUBLICATION_METADATA_FAILURE execution=19 jobStatus=UNKNOWN inMemoryStepStatus=UNKNOWN persistedStepStatus=STARTED snapshot=w9-a02322d1-dd27-4429-814f-22d3c1b1f49c manifest=COMPLETE sameParameterRestart=BLOCKED publicationReplay=verified",
+    "WEEK9_FLOW week=2026-11-16 orders=[1, 2, 3] late=4 duplicateOffset=2 activities=5 failedInstance=1 failedExecution=1 resumedExecution=2 r1=RankingSnapshot(request=RankingRequest(periodStart=2026-11-16, snapshotId=flow-r1, revision=1), frozenAt=2026-11-18T08:02:46.885610Z, inputCount=4, productCount=3, inputChecksum=431ba352ced698ee1baf22dbae2eaad65ff82e910ab11afeb39f7a9278787aa0, status=COMPLETE, resultChecksum=b35024cb37fe016a86e64595aab7f9bd66082886e21d6b10208a979f7dc37111) r2=RankingSnapshot(request=RankingRequest(periodStart=2026-11-16, snapshotId=flow-r2, revision=2), frozenAt=2026-11-18T08:02:47.366099Z, inputCount=5, productCount=3, inputChecksum=e621a8a906cf26d7342eaf32e4b028f363e1697d72033db087bca4d1918b491d, status=COMPLETE, resultChecksum=2f0ce56441e4a9d1e809e19a22c6d0db3ccfbc65c6bbae59fea9a56db303f370) pgCreates=4 API={\"periodStart\":\"2026-11-16\",\"periodEnd\":\"2026-11-23\",\"status\":\"PUBLISHED\",\"snapshotId\":\"flow-r2\",\"frozenAt\":\"2026-11-18T08:02:47.366099Z\",\"items\":[{\"productId\":1,\"name\":\"first\",\"score\":15,\"rank\":1},{\"productId\":3,\"name\":\"third\",\"score\":5,\"rank\":2},{\"productId\":2,\"name\":\"second\",\"score\":1,\"rank\":3}]}"
+  ],
+  "additionalStreamerRegression": {
+    "sourceChanged": false,
+    "firstFreshRun": {
+      "command": "./gradlew -Dorg.gradle.java.home=/tmp/jdk-21.0.13+9/Contents/Home :modules:events:test --rerun :apps:commerce-streamer:test --rerun --console=plain",
+      "exitCode": 1,
+      "tests": 17,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "duration": "2h 46m 57s",
+      "failure": "PurchaseActivityIntegrationTest: real listener stops on DB error without committing failed offset then restart succeeds; NullPointerException at line 290 while checking committed offset",
+      "observedContext": "Prolonged execution and Kafka heartbeat/session timeouts; root cause not conclusively established",
+      "log": "/tmp/week9-fresh-regression.log"
+    },
+    "retry": {
+      "command": "./gradlew -Dorg.gradle.java.home=/tmp/jdk-21.0.13+9/Contents/Home :apps:commerce-streamer:test --rerun --console=plain",
+      "exitCode": 1,
+      "tests": 17,
+      "failures": 7,
+      "errors": 0,
+      "skipped": 0,
+      "duration": "40s",
+      "failure": "Docker socket missing; Could not find a valid Docker environment while loading MySQL test configuration",
+      "result": {
+        "source": "apps/commerce-streamer/build/test-results/test",
+        "tests": 17,
+        "failures": 7,
+        "errors": 0,
+        "skipped": 0,
+        "suites": [
+          {
+            "name": "com.loopers.architecture.ArchitectureTest",
+            "timestamp": "2026-11-18T12:20:32.207Z",
+            "tests": 1,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.domain.purchase.PurchaseReceiptTest",
+            "timestamp": "2026-11-18T12:20:33.858Z",
+            "tests": 1,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.interfaces.consumer.PurchaseActivityConsumerTest",
+            "timestamp": "2026-11-18T12:20:34.773Z",
+            "tests": 3,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.kafka.KafkaAssignmentExperimentTest",
+            "timestamp": "2026-11-18T12:20:35.636Z",
+            "tests": 2,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.kafka.PurchaseListenerFailureExperimentTest",
+            "timestamp": "2026-11-18T12:20:49.566Z",
+            "tests": 1,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.purchase.PurchaseActivityIntegrationTest",
+            "timestamp": "2026-11-18T12:20:32.193Z",
+            "tests": 7,
+            "failures": 7,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "name": "com.loopers.purchase.PurchaseConfigurationTest",
+            "timestamp": "2026-11-18T12:21:01.915Z",
+            "tests": 2,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      "log": "/tmp/week9-streamer-retry.log"
+    },
+    "status": "unresolved: first listener retry failure needs another healthy Docker run"
+  },
+  "review": {
+    "independentReadOnlyReview": true,
+    "finding": "Initial publication-gap test did not fail actual metadata persistence",
+    "repair": "Inject final StepExecution repository update failure; verify in-memory UNKNOWN, persisted STARTED, committed publication and blocked restart separately",
+    "remainingProductionFindings": 0
+  },
+  "earlierFailuresAndRepairs": [
+    "Domain Red: 4 tests, 2 intended failures for quantity sum/order and overflow; fixed and Green 4/4.",
+    "Initial E2E helper expected HTTP 200 for order creation; corrected to existing 201 contract.",
+    "MySQL CHECK error is SQLState HY000/error3819 wrapped as UncategorizedSQLException; assert actual error code and constraint name.",
+    "Actual final metadata failure keeps persisted Step STARTED while Job/in-memory Step become UNKNOWN; actual launcher rejection is JobExecutionAlreadyRunningException.",
+    "Existing Batch lint: StepMonitorListener missing comma and DemoJobE2ETest empty block blank lines. Fixed only these diagnostics."
+  ],
+  "limits": [
+    "W8 coupon implementation is absent in this checkout and was not reconstructed.",
+    "No auto scheduler, forced-process-kill or code-version-replacement experiment.",
+    "Small frozen input fixture; no throughput benchmark.",
+    "Additional fresh streamer regression has not been cleared; fullCheck used its earlier cached passing result."
+  ],
+  "gitActions": {
+    "commit": false,
+    "push": false,
+    "deployment": false,
+    "stagedChanges": false
+  }
+}

@@ -28,6 +28,7 @@ class CardPaymentStrategy(
         return PaymentResult(
             method = PaymentMethod.CARD,
             status = transaction.status,
+            transactionKey = transaction.transactionKey,
         )
     }
 

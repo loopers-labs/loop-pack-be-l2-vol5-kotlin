@@ -20,7 +20,11 @@ data class PgTransaction(
     val settledAt: Instant? = null,
     val declineReason: DeclineReason? = null,
     val testCard: TestCard? = null,
+    val responseLost: Boolean = false,
 ) {
+    val dropsCallback: Boolean
+        get() = responseLost || testCard?.dropsCallback == true
+
     val isFinal: Boolean
         get() = status != PgStatus.PENDING
 

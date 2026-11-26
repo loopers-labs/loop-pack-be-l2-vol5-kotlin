@@ -47,20 +47,20 @@ class DeclineRouletteTest {
         )
     }
 
-    @DisplayName("기본 설정의 거절률은 2% 를 넘지 않는다.")
+    @DisplayName("기본 설정의 거절률은 5% 근처다.")
     @Test
-    fun keepsDefaultRateLow() {
+    fun keepsDefaultRateNearFivePercent() {
         val roulette = roulette(
             mapOf(
-                DeclineReason.LIMIT_EXCEEDED to 0.005,
-                DeclineReason.INSUFFICIENT_BALANCE to 0.005,
-                DeclineReason.LOST_OR_STOLEN to 0.001,
+                DeclineReason.LIMIT_EXCEEDED to 0.0227,
+                DeclineReason.INSUFFICIENT_BALANCE to 0.0227,
+                DeclineReason.LOST_OR_STOLEN to 0.0046,
             ),
         )
 
         val declined = (1..20_000).count { roulette.spin() != null }
 
-        assertThat(declined.toDouble() / 20_000).isLessThan(0.02)
+        assertThat(declined.toDouble() / 20_000).isBetween(0.04, 0.06)
     }
 
     private fun seedFor(firstDouble: Double): Int {

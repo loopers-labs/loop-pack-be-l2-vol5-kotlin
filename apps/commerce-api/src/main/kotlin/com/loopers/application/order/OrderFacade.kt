@@ -1,6 +1,7 @@
 package com.loopers.application.order
 
 import com.loopers.application.payment.PaymentProcessor
+import com.loopers.application.payment.PaymentReconciliation
 import com.loopers.domain.order.OrderCommand
 import com.loopers.domain.order.OrderLine
 import com.loopers.domain.order.OrderService
@@ -9,8 +10,11 @@ import com.loopers.domain.payment.PaymentMethod
 import com.loopers.domain.point.PointService
 import com.loopers.domain.product.ProductService
 import com.loopers.domain.product.StockReservationService
+import org.slf4j.LoggerFactory
+import org.springframework.core.NestedExceptionUtils
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.net.SocketTimeoutException
 
 /**
  * 주문·상품·포인트를 조합한다. **도메인끼리 직접 부르지 않고 여기서 엮는다.**
@@ -25,8 +29,11 @@ class OrderFacade(
     private val pointService: PointService,
     private val paymentProcessor: PaymentProcessor,
     private val orderConfirmation: OrderConfirmation,
+    private val paymentReconciliation: PaymentReconciliation,
     private val stockReservationService: StockReservationService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     /**
      * 주문서만 만든다. 단가는 이 시점의 상품 가격으로 고정한다. 나중에는 알아낼 수 없는 값이다.
      */
@@ -53,7 +60,26 @@ class OrderFacade(
             return started.info
         }
 
-        val result = paymentProcessor.pay(started.command)
+        log.info("PG 결제 요청. orderId={} paymentKey={}", orderId, started.paymentKey)
+        val result = try {
+            paymentProcessor.pay(started.command)
+        } catch (e: Exception) {
+            log.warn(
+                "PG 결제 응답을 받지 못했다. orderId={} paymentKey={} failure={} cause={}",
+                orderId,
+                started.paymentKey,
+                failureOf(e),
+                NestedExceptionUtils.getMostSpecificCause(e).toString(),
+            )
+            throw e
+        }
+        log.info(
+            "PG 결제 응답. orderId={} paymentKey={} transactionKey={} status={}",
+            orderId,
+            started.paymentKey,
+            result.transactionKey,
+            result.status,
+        )
         orderConfirmation.settle(started.paymentId, result.status)
 
         return started.info
@@ -77,6 +103,18 @@ class OrderFacade(
         return OrderInfo.from(canceled)
     }
 
+    private fun failureOf(e: Exception): String =
+        when (val cause = NestedExceptionUtils.getMostSpecificCause(e)) {
+            is SocketTimeoutException -> PG_TIMEOUT
+            else -> cause.javaClass.simpleName
+        }
+
+    fun reconcile(userId: Long, orderId: Long): PaymentReconciliation.Reconciled {
+        orderService.get(userId, orderId)
+
+        return paymentReconciliation.reconcile(orderId)
+    }
+
     fun get(userId: Long, orderId: Long): OrderInfo =
         OrderInfo.from(orderService.get(userId, orderId))
 
@@ -86,4 +124,8 @@ class OrderFacade(
     fun getAnyOrder(orderId: Long): OrderInfo = OrderInfo.from(orderService.getAnyOrder(orderId))
 
     fun getAllOrders(): List<OrderInfo> = orderService.getAllOrders().map { OrderInfo.from(it) }
+
+    companion object {
+        const val PG_TIMEOUT = "TIMEOUT"
+    }
 }

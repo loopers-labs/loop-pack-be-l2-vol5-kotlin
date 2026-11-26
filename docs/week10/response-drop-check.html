@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>응답 유실 재현 확인</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --ink: #1a2130;
+    --muted: #5c6677;
+    --line: #d9dee6;
+    --ok: #17845a;
+    --ok-bg: #e4f3eb;
+    --bad: #c4372c;
+    --bad-bg: #fbe6e4;
+    --warn: #a86a08;
+    --warn-bg: #fbf0dc;
+    --code-bg: #eef1f5;
+    --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #12161e; --surface: #1a2130; --ink: #e6eaf1; --muted: #9aa4b5; --line: #2d3648;
+      --ok: #4cc48e; --ok-bg: #16352a; --bad: #ff7a6e; --bad-bg: #40201e; --warn: #e6a644; --warn-bg: #3a2c12;
+      --code-bg: #232c3d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.65; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 16px 64px; display: grid; gap: 28px; }
+  header { display: grid; gap: 6px; }
+  h1 { margin: 0; font-size: 26px; line-height: 1.3; text-wrap: balance; }
+  h2 { margin: 0 0 10px; font-size: 18px; }
+  p { margin: 0; max-width: 70ch; }
+  .meta { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+  section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; display: grid; gap: 12px; }
+  .verdict { border-left: 4px solid var(--ok); }
+  .verdict strong { color: var(--ok); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 500; color: var(--muted); font-size: 12.5px; letter-spacing: .02em; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  code { font-family: var(--mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.55; background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 72ch; }
+  .flow { font-family: var(--mono); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>응답 유실 재현 확인</h1>
+    <p>테스트용 가짜 PG 가 "거래는 성공으로 저장하고 응답만 잃는" 상황을 의도대로 만드는지 확인한 기록이다.</p>
+    <div class="meta">2026-11-22 · 브랜치 feat/volume10-incident (main 7380737 기준, 미커밋) · W10 1단계</div>
+  </header>
+
+  <section class="verdict">
+    <h2>결론</h2>
+    <p><strong>부품 수준에서 의도대로 재현된다.</strong> 실제 <code>PgClient</code> 는 timeout 으로 실패했고, 가짜 PG 에는 그 주문의 SUCCESS 거래가 하나 남았으며, 같은 주문으로 조회하면 SUCCESS 가 나온다. 결제 생성 요청은 한 번뿐이다.</p>
+    <p>주문 API 부터 시작해 "그래서 Payment 가 PENDING 으로 남는다"까지는 아직 확인하지 않았다. 3단계 사고 실험에서 확인한다.</p>
+  </section>
+
+  <section>
+    <h2>무엇을 만들려 했나</h2>
+    <pre class="flow">우리 서버(PgClient) ── 결제 요청 ──▶ 가짜 PG
+                                     ├ 거래를 SUCCESS 로 저장
+                                     └ 응답을 붙잡고 보내지 않음 (1.5s)
+우리 서버: 읽기 제한 시간 초과 → 실패
+결과: PG 에는 성공 거래, 우리 서버는 결과를 모름</pre>
+    <p>3단계에서 복구할 대상이 이 상태다. PG 에 실제 거래가 남아야 "같은 거래를 조회해서 마무리"할 수 있다.</p>
+  </section>
+
+  <section>
+    <h2>어떻게 확인했나</h2>
+    <p>테스트: <code>apps/commerce-api/src/test/kotlin/com/loopers/incident/LocalPgFixtureTest.kt</code> 의 <code>storesSuccessThenDropsResponse</code> (85~99번 줄). 프로덕션 <code>PgClient</code> 를 그대로 만들어 가짜 PG 주소로 호출한다.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>줄</th><th>확인한 것</th><th>의미</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td class="num">88</td><td><code>pg.dropResponseFor(listOf(1L))</code></td><td>1번 주문만 응답을 잃게 설정</td><td>—</td></tr>
+          <tr><td class="num">90–91</td><td>호출이 예외로 끝난다 (<code>RestClientException</code>)</td><td>우리 서버가 결과를 받지 못했다</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td class="num">92</td><td>예외의 근본 원인이 <code>SocketTimeoutException</code></td><td>실패 이유가 시간 초과다</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td class="num">95</td><td>가짜 PG 의 1번 거래 상태가 <code>SUCCESS</code></td><td>PG 쪽에서는 결제가 성공했다</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td class="num">96</td><td><code>PgClient.findByOrderId(1)</code> 가 <code>SUCCESS</code></td><td>나중에 조회로 같은 거래를 찾을 수 있다</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td class="num">97</td><td>1번 주문의 생성 요청 수 1</td><td>중복 결제 요청이 없다</td><td><span class="pill ok">통과</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>설정: 이 테스트의 읽기 제한 시간 200ms, 가짜 PG 의 응답 붙잡기 800ms.</p>
+  </section>
+
+  <section>
+    <h2>단언이 아무 경우에나 통과하지 않는지</h2>
+    <p>가짜 PG 가 응답을 붙잡지 않고 바로 연결을 끊게 바꿔서 같은 테스트를 돌렸다 (응답 붙잡기 800ms → 0). timeout 이 아닌 실패라서 테스트가 깨져야 한다.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>상황</th><th>예외</th><th>근본 원인</th><th>테스트</th></tr></thead>
+        <tbody>
+          <tr><td>응답을 붙잡다가 timeout (원래 설정)</td><td><code>RestClientException</code></td><td><code>SocketTimeoutException</code></td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td>응답 없이 바로 끊김 (일부러 바꿈)</td><td><code>RestClientException</code></td><td><code>SocketException</code></td><td><span class="pill bad">실패</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>두 경우 예외 이름은 같고 근본 원인만 다르다. timeout 을 가려내는 건 92번 줄의 원인 단언이다. 확인 뒤 설정을 원래대로 되돌렸고 5개 테스트가 다시 통과했다.</p>
+  </section>
+
+  <section>
+    <h2>테스트를 고친 곳</h2>
+    <p>처음에는 91번 줄을 <code>ResourceAccessException</code> 으로 적었다. 실행해 보니 실제로는 <code>RestClientException</code> 이 와서 실패했다. 코드가 아니라 테스트에 적은 예상이 틀렸던 것이라 이름만 실제에 맞췄다. 92번 줄(원인이 timeout)과 95~97번 줄은 바꾸지 않았다. W5 <code>PgClientTest.failsOnReadTimeout</code> 도 읽기 timeout 을 같은 방식으로 단언한다.</p>
+  </section>
+
+  <section>
+    <h2>같은 실행의 나머지 fixture 테스트</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>테스트</th><th>시간</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td>접수하면 미확정 거래를 남기고 생성 호출을 한 번 센다.</td><td class="num">1.044s</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td>같은 주문으로 다시 접수하면 거래는 하나지만 두 번째 생성 시도도 기록된다.</td><td class="num">0.018s</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td>응답 유실 대상은 성공 거래를 저장한 채 클라이언트가 읽기 제한 시간을 넘긴다.</td><td class="num">0.223s</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td>확정하면 성공 콜백을 보낸다.</td><td class="num">0.010s</td><td><span class="pill ok">통과</span></td></tr>
+          <tr><td>콜백 보류 대상은 확정해도 콜백을 보내지 않고, 보류를 풀면 다시 보낼 수 있다.</td><td class="num">0.049s</td><td><span class="pill ok">통과</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="meta">실행 시각 2026-11-22T08:54:21Z · tests=5 skipped=0 failures=0 errors=0 · ./gradlew :apps:commerce-api:test --tests 'com.loopers.incident.LocalPgFixtureTest'</p>
+  </section>
+
+  <section>
+    <h2>아직 확인하지 않은 것</h2>
+    <ul>
+      <li><span class="pill warn">3단계</span> 주문 API → 확정 API → 응답 유실 → Payment <code>PENDING</code> 유지 → 재고 예약 유지. 지금은 <code>PgClient</code> 한 부품만 돌렸다.</li>
+      <li><span class="pill warn">범위</span> 상대가 진짜 pg-simulator 가 아니라 같은 계약을 따르는 테스트용 서버다. pg-simulator 는 접수 후 결과를 비동기 콜백으로 정하지만, 가짜 PG 는 응답 유실 대상을 접수 즉시 SUCCESS 로 저장한다.</li>
+      <li><span class="pill warn">범위</span> 응답 헤더를 보내기 전에 붙잡는 경우만 확인했다. 헤더는 보내고 본문 중간에 끊기는 경우는 만들지 않았다.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

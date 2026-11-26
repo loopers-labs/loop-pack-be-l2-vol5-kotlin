@@ -25,6 +25,7 @@ class PgTransactionStore {
                 status = PgStatus.PENDING,
                 requestedAt = command.at,
                 testCard = TestCard.of(command.cardNo),
+                responseLost = command.responseLost,
             )
             createdKey = generated
             generated
@@ -52,6 +53,7 @@ class PgTransactionStore {
         val cardType: CardType,
         val cardNo: String,
         val at: Instant,
+        val responseLost: Boolean = false,
     )
 
     data class Accepted(

@@ -1,6 +1,6 @@
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
-version = "0.5.0"
+version = "0.7.0"
 
 dependencies {
     implementation(project(":supports:jackson"))

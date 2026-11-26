@@ -10,5 +10,6 @@ data class PgSimulatorProperties(
     val slowCardDelay: Duration = Duration.ofSeconds(10),
     val responseDelay: Duration = Duration.ZERO,
     val callbackDropRate: Double = 0.0,
+    val responseLostRate: Double = 0.0,
     val decline: Map<DeclineReason, Double> = emptyMap(),
 )

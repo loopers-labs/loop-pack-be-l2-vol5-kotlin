@@ -62,7 +62,8 @@
 | `0000` | 확정 시 `FAILED` · `LIMIT_EXCEEDED` (확률과 무관) | 정상적인 거절. PG 가 건강하다는 증거다 |
 | `1111` | 접수 응답을 `pg.slow-card-delay` 만큼 지연 | S-1 — 호출자의 읽기 타임아웃 |
 | `2222` | `SUCCESS` 로 확정하지만 콜백을 보내지 않음 | S-5 — 콜백 유실 |
-| 그 외 | `pg.decline.*` 확률 룰렛을 돌린다. 걸리지 않으면 승인 | — |
+| `3333` | `1111` 처럼 접수 응답을 지연하고, `2222` 처럼 콜백을 보내지 않음 | W10 — 응답 유실 뒤 콜백도 오지 않아 미확인으로 남는 결제 |
+| 그 외 | 접수 때 `pg.response-lost-rate` 확률로 응답 유실을 뽑는다. 걸리면 `3333` 처럼 동작한다. 확정 때는 `pg.decline.*` 확률 룰렛을 돌리고, 걸리지 않으면 승인한다 | 운영과 비슷하게 섞인 결과 |
 
 숫자가 12자리 미만이면 `400` 이다.
 
@@ -86,17 +87,27 @@
 
 | 코드 | 사유 | 기본 확률 | 재시도하면 |
 | --- | --- | --- | --- |
-| `LIMIT_EXCEEDED` | 한도초과 | 0.5% | 소용없다. 카드 쪽 사정이다 |
-| `INSUFFICIENT_BALANCE` | 잔액부족 | 0.5% | 소용없다 |
-| `LOST_OR_STOLEN` | 분실·도난 카드 | 0.1% | 소용없다 |
+| `LIMIT_EXCEEDED` | 한도초과 | 2.27% | 소용없다. 카드 쪽 사정이다 |
+| `INSUFFICIENT_BALANCE` | 잔액부족 | 2.27% | 소용없다 |
+| `LOST_OR_STOLEN` | 분실·도난 카드 | 0.46% | 소용없다 |
 | `ISSUER_UNAVAILABLE` | 카드사 응답 없음 | 0% (꺼둠) | **의미 있다.** 카드사가 아픈 것이다 |
 
 앞의 셋은 **PG 가 건강하다는 증거**다. 서킷이 이것을 실패로 세면 한도를 넘긴 사용자들
 때문에 서킷이 열린다 (S-10). `ISSUER_UNAVAILABLE` 만 성격이 다르며, 둘을 가를 수 있는지
 보려고 기본값을 0 으로 두고 남겨뒀다.
 
-기본 합계는 1.1% 다. 실제 승인 거절률을 감안해 낮게 잡았고,
-`PG_DECLINE_LIMIT_EXCEEDED` 같은 환경변수로 올린다.
+기본 합계는 5% 다. 0.6.0 까지는 1.1% 였는데, 카드를 고르지 않아도 거절이 섞여 나오도록
+0.7.0 에서 올렸다. 사유 사이 비율(0.5 : 0.5 : 0.1)은 그대로다.
+`PG_DECLINE_LIMIT_EXCEEDED` 같은 환경변수로 바꾼다.
+
+### 응답 유실 확률
+
+`pg.response-lost-rate` (기본 1%, `PG_RESPONSE_LOST_RATE`) 에 걸린 요청은 `3333` 카드와 같다.
+접수 응답을 `pg.slow-card-delay` 만큼 늦게 주고, 확정은 하지만 콜백을 보내지 않는다.
+호출자는 read timeout 을 겪고 결제는 미확인으로 남는다. 거절 확률은 이와 별개로 확정 때 적용된다.
+테스트 카드 규칙에 걸린 카드에는 적용하지 않는다. 카드로 정한 시나리오가 확률 때문에 흔들리지 않게 하려는 것이다.
+
+확률을 모두 끄려면 `PG_RESPONSE_LOST_RATE=0` 과 `PG_DECLINE_*=0` 을 준다.
 
 ---
 
@@ -193,23 +204,25 @@ apps/pg-simulator/Dockerfile    bootJar 산출물을 COPY (멀티스테이지 �
 
 ## 6. 현재 구현
 
-버전은 `0.4.0` 이며 변경 기록은 [pg-simulator-changelog.md](pg-simulator-changelog.md) 에 있다.
+버전은 `0.7.0` 이며 변경 기록은 [pg-simulator-changelog.md](pg-simulator-changelog.md) 에 있다.
 도는 컨테이너는 `GET /actuator/info` 로 자기 버전을 말한다.
 
 
 | 파일 | 역할 |
 | --- | --- |
 | `PgSimulatorApplication.kt` | 부팅 · KST 고정 |
-| `PgSimulatorProperties.kt` | `pg.*` 설정 바인딩 (콜백 주소 · 지연 · 느린 카드 지연 · 사유별 거절 확률 · 콜백 드롭률) |
+| `PgSimulatorProperties.kt` | `pg.*` 설정 바인딩 (콜백 주소 · 지연 · 느린 카드 지연 · 사유별 거절 확률 · 콜백 드롭률 · 응답 유실 확률) |
 | `DeclineReason.kt` · `DeclineRoulette.kt` | 거절 사유와 사유별 확률 추첨 |
+| `ResponseLossRoulette.kt` | 접수 때 응답 유실 확률 추첨 |
 | `PgTransaction.kt` | 거래 모델 · `PgStatus` · 종단 상태 보호(`settle`) |
 | `CardType.kt` · `TestCard.kt` · `CardNo.kt` | 카드사 · 테스트 카드 판정 · 마스킹 |
 | `PgTransactionStore.kt` | 인메모리 저장 · orderId 멱등 |
 | `PgCallbackSender.kt` | 지연 후 확정 → 콜백 발신 (재발신 없음) |
 | `PgV1Controller.kt` · `PgV1Dto.kt` | 접수 · 거래키 조회 · orderId 조회 |
-| `PgTransactionStoreTest.kt` | 멱등 · 금액 불일치 · 동시 접수 · 종단 상태 보호 · 마스킹 · 테스트 카드 판정 (14개) |
-| `PgCallbackSenderTest.kt` | 콜백 발신 · 거절 · 드롭 · 재발신 없음 · 카드별 시나리오 (8개) |
-| `DeclineRouletteTest.kt` | 사유별 확률 분배 · 기본 거절률 상한 (4개) |
+| `PgTransactionStoreTest.kt` | 멱등 · 금액 불일치 · 동시 접수 · 종단 상태 보호 · 마스킹 · 테스트 카드 판정 · 응답 유실 기록 (15개) |
+| `PgCallbackSenderTest.kt` | 콜백 발신 · 거절 · 드롭 · 재발신 없음 · 카드별 시나리오 · 응답 유실 거래 (10개) |
+| `DeclineRouletteTest.kt` | 사유별 확률 분배 · 기본 거절률 5% 근처 (4개) |
+| `ResponseLossRouletteTest.kt` | 확률 0 · 1 · 경계값 · 기본 1% 근처 (4개) |
 | `PgV1ApiE2ETest.kt` | 접수 · 조회 · 404 · 409 · null 필드 제외 · 카드번호 미노출 (10개) |
 | `PgSimulatorContextTest.kt` | 컨텍스트 로드 (1개) |
 

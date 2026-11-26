@@ -75,7 +75,31 @@ class WeeklyRankingApiConnectionTest @Autowired constructor(
             .containsExactly(Triple(7L, 5L, 1), Triple(9L, 5L, 2), Triple(8L, 1L, 3))
     }
 
+    @DisplayName("사고 연결 5구간: 복구한 장애 집합까지 배치가 집계한 랭킹을 조회하면, 상품 점수 20 으로 1위가 나온다.")
+    @Test
+    fun returnsIncidentRankingWrittenByBatch() {
+        val brand = brandJpaRepository.save(Brand(name = "사고실험브랜드"))
+        val product = productJpaRepository.save(Product(brandId = brand.id, name = "사고실험상품", price = Money(39_000), stock = Stock(30)))
+        productRankingJpaRepository.save(
+            ProductRanking(snapshotId = WEEK, periodStart = MONDAY, productId = product.id, score = 20L, ranking = 1),
+        )
+        productRankingPointerJpaRepository.save(ProductRankingPointer(WEEK, ProductRankingPointerStatus.PUBLISHED, 1L))
+
+        val data = testRestTemplate.exchange(
+            "/api/v1/rankings/weekly?periodStart=2026-08-17&limit=10",
+            HttpMethod.GET,
+            HttpEntity<Any>(Unit),
+            responseType,
+        ).body?.data
+
+        assertThat(product.id).isEqualTo(INCIDENT_PRODUCT_ID)
+        assertThat(data?.status).isEqualTo(WeeklyRankingStatus.PUBLISHED)
+        assertThat(data?.snapshotId).isEqualTo(WEEK)
+        assertThat(data?.items?.map { Triple(it.productId, it.score, it.ranking) }).containsExactly(Triple(INCIDENT_PRODUCT_ID, 20L, 1))
+    }
+
     companion object {
+        private const val INCIDENT_PRODUCT_ID = 1L
         private const val WEEK = "2026_08_3_r1"
         private val MONDAY = LocalDate.parse("2026-08-17")
     }

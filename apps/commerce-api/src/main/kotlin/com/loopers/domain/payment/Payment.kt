@@ -61,9 +61,9 @@ class Payment(
     /**
      * 최초 성공 시각은 한 번만 적는다. 중복 콜백이 구매 시각을 뒤로 밀면 안 된다.
      */
-    fun markSuccess() {
+    fun markSuccess(at: ZonedDateTime) {
         status = PaymentStatus.SUCCESS
-        succeededAt = succeededAt ?: ZonedDateTime.now()
+        succeededAt = succeededAt ?: at
     }
 
     fun markFailed() {

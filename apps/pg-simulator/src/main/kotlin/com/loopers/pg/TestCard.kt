@@ -1,9 +1,14 @@
 package com.loopers.pg
 
-enum class TestCard(val suffix: String) {
+enum class TestCard(
+    val suffix: String,
+    val delaysResponse: Boolean = false,
+    val dropsCallback: Boolean = false,
+) {
     DECLINED("0000"),
-    SLOW("1111"),
-    SILENT("2222"),
+    SLOW("1111", delaysResponse = true),
+    SILENT("2222", dropsCallback = true),
+    RESPONSE_LOST("3333", delaysResponse = true, dropsCallback = true),
     ;
 
     companion object {

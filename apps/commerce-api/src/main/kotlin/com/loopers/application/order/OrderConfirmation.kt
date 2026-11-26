@@ -48,7 +48,7 @@ class OrderConfirmation(
             paymentSettlement.reflect(payment, paymentProcessor.pay(command).status)
         }
 
-        return Started(info = info, paymentId = payment.id, command = command)
+        return Started(info = info, paymentId = payment.id, paymentKey = payment.paymentKey, command = command)
     }
 
     @Transactional
@@ -59,6 +59,7 @@ class OrderConfirmation(
     data class Started(
         val info: OrderInfo,
         val paymentId: Long,
+        val paymentKey: String,
         val command: PaymentCommand,
     )
 }

@@ -8,6 +8,7 @@ data class PaymentTransaction(
     val maskedCardNo: String,
     val status: PaymentStatus,
     val declineReason: String? = null,
+    val transactionKey: String? = null,
 ) {
     val isFinal: Boolean
         get() = status != PaymentStatus.PENDING

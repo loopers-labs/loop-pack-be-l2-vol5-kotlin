@@ -16,6 +16,13 @@ class OrderV1Dto {
         val cardNo: String? = null,
     )
 
+    data class ReconcileResponse(
+        val orderId: Long,
+        val outcome: String,
+        val paymentStatus: String?,
+        val transactionKey: String?,
+    )
+
     data class OrderResponse(
         val id: Long,
         val status: String,

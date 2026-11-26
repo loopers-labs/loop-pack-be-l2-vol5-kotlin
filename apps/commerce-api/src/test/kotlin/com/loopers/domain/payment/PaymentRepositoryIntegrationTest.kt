@@ -13,6 +13,7 @@ import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
+import java.time.ZonedDateTime
 
 @SpringBootTest
 class PaymentRepositoryIntegrationTest @Autowired constructor(
@@ -57,7 +58,7 @@ class PaymentRepositoryIntegrationTest @Autowired constructor(
     fun changesStatus() {
         val saved = paymentRepository.save(Payment(userId = 1L, orderId = 1L, amount = Money(50_000)))
 
-        saved.markSuccess()
+        saved.markSuccess(ZonedDateTime.now())
         paymentRepository.save(saved)
 
         assertThat(paymentRepository.findAllByOrderId(1L).first().status).isEqualTo(PaymentStatus.SUCCESS)

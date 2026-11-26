@@ -59,7 +59,11 @@ class PgCallbackSenderTest {
         return PgCallbackSender(properties, store, DeclineRoulette(properties))
     }
 
-    private fun acceptedKey(orderId: Long, cardNo: String = "1234-5678-9814-1451") =
+    private fun acceptedKey(
+        orderId: Long,
+        cardNo: String = "1234-5678-9814-1451",
+        responseLost: Boolean = false,
+    ) =
         store.accept(
             PgTransactionStore.Accept(
                 orderId = orderId,
@@ -67,6 +71,7 @@ class PgCallbackSenderTest {
                 cardType = CardType.SAMSUNG,
                 cardNo = cardNo,
                 at = Instant.now(),
+                responseLost = responseLost,
             ),
         ).transaction.transactionKey
 
@@ -156,6 +161,34 @@ class PgCallbackSenderTest {
     @Test
     fun dropsCallbackForSilentCard() {
         val key = acceptedKey(6L, cardNo = "1234-5678-9814-2222")
+
+        sender().scheduleSettlement(key)
+
+        assertAll(
+            { assertThat(arrived.await(1, TimeUnit.SECONDS)).isFalse() },
+            { assertThat(received).isEmpty() },
+            { assertThat(store.find(key)?.status).isEqualTo(PgStatus.SUCCESS) },
+        )
+    }
+
+    @DisplayName("응답 유실 카드도 확정은 되지만 콜백이 오지 않는다.")
+    @Test
+    fun dropsCallbackForResponseLostCard() {
+        val key = acceptedKey(8L, cardNo = "1234-5678-9814-3333")
+
+        sender().scheduleSettlement(key)
+
+        assertAll(
+            { assertThat(arrived.await(1, TimeUnit.SECONDS)).isFalse() },
+            { assertThat(received).isEmpty() },
+            { assertThat(store.find(key)?.status).isEqualTo(PgStatus.SUCCESS) },
+        )
+    }
+
+    @DisplayName("응답 유실로 뽑힌 거래도 확정은 되지만 콜백이 오지 않는다.")
+    @Test
+    fun dropsCallbackForResponseLostTransaction() {
+        val key = acceptedKey(9L, responseLost = true)
 
         sender().scheduleSettlement(key)
 

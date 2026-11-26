@@ -50,6 +50,23 @@ class OrderV1Controller(
             .let { ApiResponse.success(it) }
     }
 
+    @PostMapping("/{orderId}/reconcile")
+    fun reconcile(
+        @RequestHeader(value = "X-USER-ID") userId: Long,
+        @PathVariable(value = "orderId") orderId: Long,
+    ): ApiResponse<OrderV1Dto.ReconcileResponse> {
+        return orderFacade.reconcile(userId, orderId)
+            .let {
+                OrderV1Dto.ReconcileResponse(
+                    orderId = it.orderId,
+                    outcome = it.outcome.name,
+                    paymentStatus = it.paymentStatus?.name,
+                    transactionKey = it.transactionKey,
+                )
+            }
+            .let { ApiResponse.success(it) }
+    }
+
     @DeleteMapping("/{orderId}")
     fun cancel(
         @RequestHeader(value = "X-USER-ID") userId: Long,

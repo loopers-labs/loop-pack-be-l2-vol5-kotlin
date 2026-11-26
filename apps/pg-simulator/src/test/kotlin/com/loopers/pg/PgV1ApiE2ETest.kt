@@ -15,6 +15,7 @@ import java.math.BigInteger
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = [
         "pg.callback-delay=1h",
+        "pg.response-lost-rate=0",
         "pg.callback-url=http://localhost:1/callback",
     ],
 )

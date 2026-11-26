@@ -22,6 +22,7 @@ class PgTransactionStoreTest {
         at: Instant = now,
         cardNo: String = "1234-5678-9814-1451",
         amount: BigInteger = this.amount,
+        responseLost: Boolean = false,
     ) = store.accept(
         PgTransactionStore.Accept(
             orderId = orderId,
@@ -29,6 +30,7 @@ class PgTransactionStoreTest {
             cardType = CardType.SAMSUNG,
             cardNo = cardNo,
             at = at,
+            responseLost = responseLost,
         ),
     )
 
@@ -151,7 +153,17 @@ class PgTransactionStoreTest {
                 { assertThat(accept(1L, cardNo = "1234-5678-9814-0000").transaction.testCard).isEqualTo(TestCard.DECLINED) },
                 { assertThat(accept(2L, cardNo = "1234-5678-9814-1111").transaction.testCard).isEqualTo(TestCard.SLOW) },
                 { assertThat(accept(3L, cardNo = "1234-5678-9814-2222").transaction.testCard).isEqualTo(TestCard.SILENT) },
-                { assertThat(accept(4L, cardNo = "1234-5678-9814-1451").transaction.testCard).isNull() },
+                { assertThat(accept(4L, cardNo = "1234-5678-9814-3333").transaction.testCard).isEqualTo(TestCard.RESPONSE_LOST) },
+                { assertThat(accept(5L, cardNo = "1234-5678-9814-1451").transaction.testCard).isNull() },
+            )
+        }
+
+        @DisplayName("응답 유실 여부는 접수 시점에 거래에 남는다.")
+        @Test
+        fun keepsResponseLost() {
+            assertAll(
+                { assertThat(accept(1L, responseLost = true).transaction.dropsCallback).isTrue() },
+                { assertThat(accept(2L).transaction.dropsCallback).isFalse() },
             )
         }
     }

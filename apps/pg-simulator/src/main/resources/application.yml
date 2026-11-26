@@ -25,8 +25,9 @@ pg:
   slow-card-delay: ${PG_SLOW_CARD_DELAY:10s}
   response-delay: ${PG_RESPONSE_DELAY:0s}
   decline:
-    limit-exceeded: ${PG_DECLINE_LIMIT_EXCEEDED:0.005}
-    insufficient-balance: ${PG_DECLINE_INSUFFICIENT_BALANCE:0.005}
-    lost-or-stolen: ${PG_DECLINE_LOST_OR_STOLEN:0.001}
+    limit-exceeded: ${PG_DECLINE_LIMIT_EXCEEDED:0.0227}
+    insufficient-balance: ${PG_DECLINE_INSUFFICIENT_BALANCE:0.0227}
+    lost-or-stolen: ${PG_DECLINE_LOST_OR_STOLEN:0.0046}
     issuer-unavailable: ${PG_DECLINE_ISSUER_UNAVAILABLE:0.0}
   callback-drop-rate: ${PG_CALLBACK_DROP_RATE:0.0}
+  response-lost-rate: ${PG_RESPONSE_LOST_RATE:0.01}

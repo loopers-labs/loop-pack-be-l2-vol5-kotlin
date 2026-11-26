@@ -43,6 +43,10 @@ pg:
   connect-timeout: ${PG_CONNECT_TIMEOUT:1s}
   read-timeout: ${PG_READ_TIMEOUT:3s}
 
+payment:
+  metrics:
+    stale-pending-after: ${PAYMENT_STALE_PENDING_AFTER:1m}
+
 resilience4j:
   circuitbreaker:
     instances:

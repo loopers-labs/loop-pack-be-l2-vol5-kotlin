@@ -60,8 +60,36 @@ class OrderConfirmedRelayConnectionTest @Autowired constructor(
         )
     }
 
-    private fun contract(): List<String> =
-        requireNotNull(javaClass.getResource(CONTRACT)).readText().lines().filter { it.isNotBlank() }
+    @DisplayName("사고 연결 2구간: 정상 10건과 복구한 장애 10건의 아웃박스 행을 relay 가 보내면, Kafka 에 20건이 키와 payload 그대로 도착한다.")
+    @Test
+    fun relaysIncidentPayloadAsIs() {
+        val before = endOffsets()
+        val payloads = contract(INCIDENT_CONTRACT)
+        payloads.forEach { payload ->
+            val orderId = objectMapper.readTree(payload).get("orderId").asLong()
+            outboxEventRepository.save(
+                OutboxEvent(
+                    eventId = "order-confirmed:v1:$orderId",
+                    topic = TOPIC,
+                    eventType = "OrderConfirmed",
+                    schemaVersion = 1,
+                    payload = payload,
+                    key = orderId.toString(),
+                ),
+            )
+        }
+
+        val relayed = outboxRelay.relayAll()
+
+        assertThat(relayed).isEqualTo(INCIDENT_ORDER_COUNT)
+        val received = recordsSince(before, expected = INCIDENT_ORDER_COUNT)
+        assertThat(received).containsExactlyInAnyOrderEntriesOf(
+            payloads.associateBy { objectMapper.readTree(it).get("orderId").asText() },
+        )
+    }
+
+    private fun contract(path: String = CONTRACT): List<String> =
+        requireNotNull(javaClass.getResource(path)).readText().lines().filter { it.isNotBlank() }
 
     private fun consumer() = KafkaConsumer<String, String>(
         Properties().apply {
@@ -103,6 +131,8 @@ class OrderConfirmedRelayConnectionTest @Autowired constructor(
 
     companion object {
         private const val CONTRACT = "/contract/order-confirmed-2026-08-17.jsonl"
+        private const val INCIDENT_CONTRACT = "/contract/order-confirmed-incident-2026-08-17.jsonl"
+        private const val INCIDENT_ORDER_COUNT = 20
         private const val TOPIC = "order.events.connection-probe"
         private const val BROKERS = "localhost:19092,localhost:19093,localhost:19094"
     }

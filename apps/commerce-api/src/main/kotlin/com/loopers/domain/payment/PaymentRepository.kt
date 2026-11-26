@@ -1,5 +1,7 @@
 package com.loopers.domain.payment
 
+import java.time.ZonedDateTime
+
 interface PaymentRepository {
     fun save(payment: Payment): Payment
 
@@ -8,4 +10,6 @@ interface PaymentRepository {
     fun findByPaymentKey(paymentKey: String): Payment?
 
     fun findAllByOrderId(orderId: Long): List<Payment>
+
+    fun countPendingCreatedBefore(threshold: ZonedDateTime): Long
 }

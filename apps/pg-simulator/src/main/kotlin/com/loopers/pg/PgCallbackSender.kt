@@ -71,7 +71,7 @@ class PgCallbackSender(
     }
 
     private fun shouldDropCallback(settled: PgTransaction): Boolean =
-        settled.testCard == TestCard.SILENT || Random.nextDouble() < properties.callbackDropRate
+        settled.dropsCallback || Random.nextDouble() < properties.callbackDropRate
 
     private data class Outcome(
         val status: PgStatus,

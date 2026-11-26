@@ -18,6 +18,7 @@ class PgV1Controller(
     private val store: PgTransactionStore,
     private val callbackSender: PgCallbackSender,
     private val properties: PgSimulatorProperties,
+    private val responseLossRoulette: ResponseLossRoulette,
 ) {
     @PostMapping
     fun request(
@@ -27,9 +28,11 @@ class PgV1Controller(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "카드번호 형식이 올바르지 않습니다.")
         }
 
+        val testCard = TestCard.of(request.cardNo)
+        val responseLost = testCard == null && responseLossRoulette.spin()
         val delay = maxOf(
             properties.responseDelay.toMillis(),
-            if (TestCard.of(request.cardNo) == TestCard.SLOW) properties.slowCardDelay.toMillis() else 0,
+            if (responseLost || testCard?.delaysResponse == true) properties.slowCardDelay.toMillis() else 0,
         )
         if (delay > 0) {
             Thread.sleep(delay)
@@ -42,6 +45,7 @@ class PgV1Controller(
                 cardType = request.cardType,
                 cardNo = request.cardNo,
                 at = Instant.now(),
+                responseLost = responseLost,
             ),
         )
 

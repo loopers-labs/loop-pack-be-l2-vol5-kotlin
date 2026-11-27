@@ -14,6 +14,7 @@ import com.loopers.order.infrastructure.OrderJpaRepository
 import com.loopers.order.infrastructure.StockReservationJpaRepository
 import com.loopers.outbox.infrastructure.OutboxEventJpaRepository
 import com.loopers.payment.PaymentAttempt
+import com.loopers.payment.PaymentStatus
 import com.loopers.payment.infrastructure.PaymentAttemptJpaRepository
 import com.loopers.point.domain.PointService
 import com.loopers.product.infrastructure.ProductJpaRepository
@@ -93,20 +94,21 @@ class PaymentIntegrationTest @Autowired constructor(
     private fun draft(quantity: Int = 2): Long =
         orderFacade.create(loginId, OrderCommand(items = listOf(OrderCommand.Item(productId = productId, quantity = quantity)))).id
 
-    private fun headers() = HttpHeaders().apply {
+    private fun headers(user: String) = HttpHeaders().apply {
         contentType = MediaType.APPLICATION_JSON
-        set("X-USER-ID", UserFixture.DEFAULT_LOGIN_ID)
+        set("X-USER-ID", user)
     }
 
-    private fun post(url: String, body: String = ""): ResponseEntity<JsonNode> =
-        testRestTemplate.exchange(url, HttpMethod.POST, HttpEntity(body, headers()), JsonNode::class.java)
+    private fun post(url: String, body: String = "", user: String = UserFixture.DEFAULT_LOGIN_ID): ResponseEntity<JsonNode> =
+        testRestTemplate.exchange(url, HttpMethod.POST, HttpEntity(body, headers(user)), JsonNode::class.java)
 
     private fun start(orderId: Long, attemptKey: String = "attempt-$orderId") = post(
         "/api/v1/orders/$orderId/payment",
         """{"paymentAttemptKey": "$attemptKey", "cardType": "TEST", "cardNo": "0000-0000-0000-0000"}""",
     )
 
-    private fun reconcile(orderId: Long) = post("/api/v1/orders/$orderId/payment/reconcile")
+    private fun reconcile(orderId: Long, user: String = UserFixture.DEFAULT_LOGIN_ID) =
+        post("/api/v1/orders/$orderId/payment/reconcile", user = user)
 
     private fun callback(orderId: Long, transactionKey: String, status: String) = post(
         "/api/v1/payments/callback",
@@ -228,17 +230,112 @@ class PaymentIntegrationTest @Autowired constructor(
 
         // act · 주문 번호로 기존 거래를 찾고, 성공 뒤 다시 확인
         val found = reconcile(orderId)
+        assertThat(found.statusCode).isEqualTo(HttpStatus.ACCEPTED)
+        assertThat(found.body.paymentStatus()).isEqualTo("PENDING")
+        assertThat(orderStatus(orderId)).isEqualTo(OrderStatus.PAYMENT_PENDING)
+        assertThat(reservation(orderId)).isEqualTo(StockReservationStatus.RESERVED)
+        assertThat(outboxEventJpaRepository.count()).isZero()
+
         provider.complete(onlyTransactionKey(orderId), "SUCCESS")
         val confirmed = reconcile(orderId)
 
         // assert
         assertAll(
-            { assertThat(found.body.paymentStatus()).isEqualTo("PENDING") },
             { assertThat(confirmed.body.paymentStatus()).isEqualTo("SUCCESS") },
             { assertThat(orderStatus(orderId)).isEqualTo(OrderStatus.CONFIRMED) },
             { assertThat(stock()).isEqualTo(3) },
             { assertThat(provider.createCount.get()).isEqualTo(1) },
             { assertThat(provider.transactions()).hasSize(1) },
+        )
+    }
+
+    @Test
+    @DisplayName("PG 거래 조회가 실패하면 결제를 UNKNOWN으로 유지한다")
+    fun keepsUnknownWhenLookupFails() {
+        val orderId = draft()
+        loseSuccessfulCreateResponse(orderId)
+        provider.lookupFails = true
+
+        assertUnknownResponse(reconcile(orderId))
+        assertPaymentStillUnknown(orderId)
+    }
+
+    @Test
+    @DisplayName("PG 조회 결과가 0건이면 결제를 UNKNOWN으로 유지한다")
+    fun keepsUnknownWhenNoTransactionIsFound() {
+        val orderId = draft()
+        val transaction = loseSuccessfulCreateResponse(orderId)
+        provider.orderLookupOverrides[transaction.orderId] = emptyList()
+
+        assertUnknownResponse(reconcile(orderId))
+        assertPaymentStillUnknown(orderId)
+    }
+
+    @Test
+    @DisplayName("성공한 PG 거래가 여러 건이면 하나를 선택해 확정하지 않는다")
+    fun keepsUnknownWhenMultipleTransactionsAreFound() {
+        val orderId = draft()
+        val transaction = loseSuccessfulCreateResponse(orderId)
+        val otherTransaction = transaction.copy(transactionKey = "TEST-TX-OTHER")
+        provider.orderLookupOverrides[transaction.orderId] = listOf(transaction, otherTransaction)
+
+        assertUnknownResponse(reconcile(orderId))
+        assertPaymentStillUnknown(orderId)
+    }
+
+    @Test
+    @DisplayName("성공한 PG 거래의 금액이 주문과 다르면 충돌을 반환하고 확정하지 않는다")
+    fun rejectsSuccessfulTransactionWithWrongAmount() {
+        val orderId = draft()
+        val transaction = loseSuccessfulCreateResponse(orderId)
+        provider.orderLookupOverrides[transaction.orderId] = listOf(transaction.copy(amount = transaction.amount + 1))
+
+        val response = reconcile(orderId)
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.CONFLICT)
+        assertThat(response.body.errorCode()).isEqualTo("PAYMENT_RESULT_MISMATCH")
+        assertPaymentStillUnknown(orderId)
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 주문을 재조회하면 PG 호출 없이 404를 반환한다")
+    fun rejectsReconcileForAnotherBuyersOrder() {
+        val otherBuyer = "otherbuyer"
+        userJpaRepository.save(UserFixture.user(loginId = otherBuyer))
+        val orderId = draft()
+        loseSuccessfulCreateResponse(orderId)
+        val pgRequests = provider.requests.toList()
+
+        val response = reconcile(orderId, user = otherBuyer)
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+        assertThat(response.body.errorCode()).isEqualTo("ORDER_NOT_FOUND")
+        assertThat(provider.requests).containsExactlyElementsOf(pgRequests)
+        assertPaymentStillUnknown(orderId)
+    }
+
+    private fun loseSuccessfulCreateResponse(orderId: Long): TestPaymentProvider.Transaction {
+        val providerOrderId = PaymentAttempt.providerOrderIdOf(orderId)
+        provider.successThenDelayOrders.add(providerOrderId)
+        assertUnknownResponse(start(orderId))
+        return provider.transactionsOf(providerOrderId).single()
+    }
+
+    private fun assertUnknownResponse(response: ResponseEntity<JsonNode>) {
+        assertThat(response.statusCode).isEqualTo(HttpStatus.ACCEPTED)
+        assertThat(response.body.paymentStatus()).isEqualTo("UNKNOWN")
+    }
+
+    private fun assertPaymentStillUnknown(orderId: Long) {
+        val attempt = requireNotNull(paymentAttemptJpaRepository.findByOrderId(orderId))
+        assertAll(
+            { assertThat(attempt.status).isEqualTo(PaymentStatus.UNKNOWN) },
+            { assertThat(attempt.transactionKey).isNull() },
+            { assertThat(orderStatus(orderId)).isEqualTo(OrderStatus.PAYMENT_PENDING) },
+            { assertThat(reservation(orderId)).isEqualTo(StockReservationStatus.RESERVED) },
+            { assertThat(stock()).isEqualTo(3) },
+            { assertThat(provider.createCount.get()).isEqualTo(1) },
+            { assertThat(outboxEventJpaRepository.count()).isZero() },
         )
     }
 

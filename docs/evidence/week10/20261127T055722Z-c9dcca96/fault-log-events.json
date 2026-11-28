@@ -1,0 +1,35 @@
+{
+  "13" : [ {
+    "level" : "WARN",
+    "fields" : {
+      "event" : "pg.create.outcome-unknown",
+      "trigger" : "confirm",
+      "orderId" : "13",
+      "paymentId" : "13",
+      "pgOrderId" : "7c45c7c0-e39a-4ee5-8451-1267831714c9",
+      "cause" : "NoHttpResponseException"
+    }
+  } ],
+  "16" : [ {
+    "level" : "WARN",
+    "fields" : {
+      "event" : "pg.create.outcome-unknown",
+      "trigger" : "confirm",
+      "orderId" : "16",
+      "paymentId" : "16",
+      "pgOrderId" : "7cb36285-123e-406e-9a9d-e4facdabdf21",
+      "cause" : "NoHttpResponseException"
+    }
+  } ],
+  "19" : [ {
+    "level" : "WARN",
+    "fields" : {
+      "event" : "pg.create.outcome-unknown",
+      "trigger" : "confirm",
+      "orderId" : "19",
+      "paymentId" : "19",
+      "pgOrderId" : "a743d8d8-b82b-4bfc-a42d-caae8788ef4d",
+      "cause" : "NoHttpResponseException"
+    }
+  } ]
+}

@@ -1,0 +1,83 @@
+{
+  "hypothesesWrittenAt" : "2026-11-27T05:57:22.953437Z",
+  "hypotheses" : [ {
+    "hypothesis" : "A",
+    "statement" : "The PG is still processing the payment.",
+    "expected" : "The PG's list lookup finds the transaction PENDING."
+  }, {
+    "hypothesis" : "B",
+    "statement" : "The PG's success response was lost.",
+    "expected" : "The lookup finds the transaction SUCCESS, and the order's only event is pg.create.outcome-unknown."
+  }, {
+    "hypothesis" : "C",
+    "statement" : "Commerce received the success but failed to apply it.",
+    "expected" : "The lookup finds the transaction SUCCESS, and the order's events hold pg.create.accepted, then payment.apply.failed."
+  } ],
+  "orders" : [ {
+    "orderId" : 13,
+    "pgOrderId" : "7c45c7c0-e39a-4ee5-8451-1267831714c9",
+    "lookedUpAt" : "2026-11-27T05:57:22.961913Z",
+    "lookupBody" : "[{\"transactionKey\":\"20261126:TR:incident-13\",\"orderId\":\"7c45c7c0-e39a-4ee5-8451-1267831714c9\",\"amount\":1000,\"status\":\"SUCCESS\"}]",
+    "observed" : {
+      "lookupStatuses" : [ "SUCCESS" ],
+      "events" : [ "pg.create.outcome-unknown" ]
+    },
+    "judgements" : [ {
+      "hypothesis" : "A",
+      "expected" : "The PG's list lookup finds the transaction PENDING.",
+      "verdict" : "REJECTED"
+    }, {
+      "hypothesis" : "B",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's only event is pg.create.outcome-unknown.",
+      "verdict" : "ACCEPTED"
+    }, {
+      "hypothesis" : "C",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's events hold pg.create.accepted, then payment.apply.failed.",
+      "verdict" : "REJECTED"
+    } ]
+  }, {
+    "orderId" : 16,
+    "pgOrderId" : "7cb36285-123e-406e-9a9d-e4facdabdf21",
+    "lookedUpAt" : "2026-11-27T05:57:22.965124Z",
+    "lookupBody" : "[{\"transactionKey\":\"20261126:TR:incident-16\",\"orderId\":\"7cb36285-123e-406e-9a9d-e4facdabdf21\",\"amount\":1000,\"status\":\"SUCCESS\"}]",
+    "observed" : {
+      "lookupStatuses" : [ "SUCCESS" ],
+      "events" : [ "pg.create.outcome-unknown" ]
+    },
+    "judgements" : [ {
+      "hypothesis" : "A",
+      "expected" : "The PG's list lookup finds the transaction PENDING.",
+      "verdict" : "REJECTED"
+    }, {
+      "hypothesis" : "B",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's only event is pg.create.outcome-unknown.",
+      "verdict" : "ACCEPTED"
+    }, {
+      "hypothesis" : "C",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's events hold pg.create.accepted, then payment.apply.failed.",
+      "verdict" : "REJECTED"
+    } ]
+  }, {
+    "orderId" : 19,
+    "pgOrderId" : "a743d8d8-b82b-4bfc-a42d-caae8788ef4d",
+    "lookedUpAt" : "2026-11-27T05:57:22.967213Z",
+    "lookupBody" : "[{\"transactionKey\":\"20261126:TR:incident-19\",\"orderId\":\"a743d8d8-b82b-4bfc-a42d-caae8788ef4d\",\"amount\":1000,\"status\":\"SUCCESS\"}]",
+    "observed" : {
+      "lookupStatuses" : [ "SUCCESS" ],
+      "events" : [ "pg.create.outcome-unknown" ]
+    },
+    "judgements" : [ {
+      "hypothesis" : "A",
+      "expected" : "The PG's list lookup finds the transaction PENDING.",
+      "verdict" : "REJECTED"
+    }, {
+      "hypothesis" : "B",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's only event is pg.create.outcome-unknown.",
+      "verdict" : "ACCEPTED"
+    }, {
+      "hypothesis" : "C",
+      "expected" : "The lookup finds the transaction SUCCESS, and the order's events hold pg.create.accepted, then payment.apply.failed.",
+      "verdict" : "REJECTED"
+    } ]
+  } ]
+}

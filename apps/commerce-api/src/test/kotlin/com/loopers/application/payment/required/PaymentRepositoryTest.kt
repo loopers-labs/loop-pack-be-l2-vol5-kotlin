@@ -219,4 +219,20 @@ class PaymentRepositoryTest(
             "UK_PAYMENT_ON_PG_ORDER_ID:pg_order_id",
         )
     }
+
+    /**
+     * Besides the primary key, the unique keys are the payment table's only indexes. No reader counts payments by status any more
+     * (spec 281), so `docs/migrations/2026-11-27-drop-payment-status-index.sql` drops the status index the week 10 count had added.
+     */
+    @Test
+    fun `the payment table has no non-unique index`() {
+        val indexes = entityManager
+            .createNativeQuery(
+                "select concat(index_name, ':', seq_in_index, ':', column_name) from information_schema.statistics " +
+                    "where table_schema = database() and table_name = 'payment' and non_unique = 1",
+            )
+            .resultList
+
+        assertThat(indexes).isEmpty()
+    }
 }
